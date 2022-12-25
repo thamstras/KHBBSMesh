@@ -1,22 +1,22 @@
-#include "ShaderLibrary.h"
+#include "ShaderManager.h"
 
-ShaderLibrary::ShaderLibrary() : m_shaderMap()
+CShaderManager::CShaderManager() : m_shaderMap()
 {
 
 }
 
-ShaderLibrary::ShaderLibrary(std::vector<ShaderDef>& shaders)
+CShaderManager::CShaderManager(std::vector<ShaderDef>& shaders)
 {
 	for (auto itr = shaders.begin(); itr < shaders.end(); itr++)
 		this->AddShader(*itr);
 }
 
-ShaderLibrary::~ShaderLibrary()
+CShaderManager::~CShaderManager()
 {
 	// TODO
 }
 
-bool ShaderLibrary::AddShader(ShaderDef& shaderDef)
+bool CShaderManager::AddShader(ShaderDef& shaderDef)
 {
 	if (IsShaderAvailible(shaderDef.shaderName))
 		return true;
@@ -29,13 +29,13 @@ bool ShaderLibrary::AddShader(ShaderDef& shaderDef)
 	return res.second;
 }
 
-bool ShaderLibrary::IsShaderAvailible(std::string& name)
+bool CShaderManager::IsShaderAvailible(std::string& name)
 {
 	if (m_shaderMap.find(name) == m_shaderMap.end()) return false;
 	return true;
 }
 
-std::shared_ptr<CShader> ShaderLibrary::GetShader(const std::string& name)
+std::shared_ptr<CShader> CShaderManager::GetShader(const std::string& name)
 {
 	auto itr = m_shaderMap.find(name);
 	if (itr == m_shaderMap.end())

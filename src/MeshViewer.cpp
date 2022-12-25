@@ -10,8 +10,8 @@ using namespace BBSMesh;
 /* 
 	### TODO ###
 	[X] Finish event handling
-	[ ] New FileManager
-	[ ] struct GraphicsContext + CTextureManager
+	[X] New FileManager
+	[X] struct GraphicsContext + CTextureManager
 	[ ] BBS/CSkelModelObject + Core/CSkelMesh
 	[ ] Draw mesh
 	[ ] Draw skeleton (Will need to sort out DebugDrawLine properly, eg: draw all the lines in one GL_LINES draw call via a GL_STREAM_DRAW buffer)
@@ -27,6 +27,8 @@ MeshViewer::MeshViewer(int argc, char** argv)
 	// 1) Load settings from ini
 	// 2) Load settings from command line
 	// 3) Verify preconditions?
+
+	m_fileManager = std::make_unique<CFileManager>();
 }
 
 void MeshViewer::Run()
@@ -43,14 +45,31 @@ void MeshViewer::Run()
 		throw std::exception("Init failure");
 	}
 
-	m_graphicsContext = std::make_unique<GraphicsContext>();
+	std::vector<ShaderDef> shaders =
+	{
+		{
+			"unlit_vcol_tex",
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "unlit_vcol_tex.vert.glsl"),
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "unlit_vcol_tex.frag.glsl")
+		},
+		{
+			"constant",
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "constant.vert.glsl"),
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "constant.frag.glsl")
+		},
+		{
+			"unlit_vcol",
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "unlit_vcol.vert.glsl"),
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "unlit_vcol.frag.glsl")
+		}
+	};
 
-	// TODO: Load Shaders
+	m_graphicsContext = std::make_unique<GraphicsContext>(shaders);
 
 	m_rootRenderContext = m_graphicsContext->CreateRenderContext();
 	m_currentCamera = std::make_shared<CCamera>(glm::vec3(5.0f, 5.0f, 5.0f));
 	
-	m_rootRenderContext->render.current_camera = ;
+	m_rootRenderContext->render.current_camera = m_currentCamera;
 	m_rootRenderContext->render.wireframe = false;
 	m_rootRenderContext->render.no_blend = false;
 	m_rootRenderContext->render.no_cull = false;
@@ -62,6 +81,49 @@ void MeshViewer::Run()
 	m_rootRenderContext->env.fogNear = 1000.0f;
 	m_rootRenderContext->env.fogFar = 1000.0f;
 	m_rootRenderContext->env.clearColor = glm::vec4(0.2f, 0.3f, 0.3f, 1.0f);
+
+	float deltaTime;
+	float lastFrame = glfwGetTime();
+	double worldTime = 0.0;
+	while (!m_shouldQuit)
+	{
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		if (deltaTime > MAX_DELTA_TIME) deltaTime = MAX_DELTA_TIME;
+		lastFrame = currentFrame;
+		worldTime += deltaTime;
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		// ProcessInput before NewFrame so we have the newest camera transform
+		ProcessInput(m_window.window, deltaTime, worldTime);
+
+		m_rootRenderContext->NewFrame();
+		
+		// ProcessGUI first so changes take effect before we Update
+		ProcessGUI();
+
+		// Update the animation
+		Update(deltaTime, worldTime);
+		
+		// Draw the mesh to the framebuffer (No viewport window here)
+		Render();
+
+		// Draw the gui to the framebuffer
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// Display the framebuffer on screen and handle window events
+		glfwSwapBuffers(m_window.window);
+		glfwPollEvents();
+
+		// Process end of frame stuff (like loading a new file?)
+		ProcessDelayed();
+	}
+
+	// TODO: Shutdown
 }
 
 bool MeshViewer::Init()
@@ -155,8 +217,7 @@ bool MeshViewer::Init()
 	ImGui_ImplOpenGL3_Init();
 
 	//std::string fontPath = fileManager.GetFontPath("Roboto-Medium.ttf");
-	// TODO: fileManager.GetResourcePath(RSRC_FONT, "Aldrich-Regular.ttf");
-	std::string fontPath = fileManager.GetFontPath("Aldrich-Regular.ttf");
+	std::string fontPath = m_fileManager->GetResourcePath(EResourceType::RSRC_FONT, "Aldrich-Regular.ttf");
 	ImFont* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 13.0f);
 	assert(font != nullptr);
 

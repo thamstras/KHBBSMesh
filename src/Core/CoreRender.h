@@ -1,6 +1,6 @@
 #pragma once
 #include "..\Common.h"
-#include "ShaderLibrary.h"
+#include "ShaderManager.h"
 
 enum ERenderLayer
 {
@@ -68,7 +68,7 @@ struct RenderContext
 		bool no_fog;
 		bool no_lighting;
 
-		CCamera* current_camera;
+		std::shared_ptr<CCamera> current_camera;
 		glm::mat4 skyViewMatrix;
 		glm::mat4 viewMatrix;
 		glm::mat4 projectionMatrix;
@@ -88,7 +88,7 @@ struct RenderContext
 		std::string highlight_shader;
 		std::string textureless_shader;
 
-		std::shared_ptr<ShaderLibrary> shaderLibrary;
+		std::shared_ptr<CShaderManager> shaderLibrary;
 
 	} render;
 

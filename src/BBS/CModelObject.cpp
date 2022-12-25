@@ -140,7 +140,7 @@ CMesh* CModelObject::BuildMesh(std::vector<CModelSection*>& sections)
 		meshSection.stride = (10 * sizeof(float));
 		meshSection.twoSided = modelSection->attributes & ATTR_BACK;
 		meshSection.blend = modelSection->attributes & ATTR_BLEND_MASK;
-		for (uint16 kick : modelSection->primCount)
+		for (uint16_t kick : modelSection->primCount)
 		{
 			meshSection.kickList.push_back((unsigned int)kick);
 		}
@@ -265,7 +265,7 @@ CModelSection::CModelSection()
 
 void CModelSection::LoadSection(PmoMesh& mesh)
 {
-	uint32 constDiffuse = 0;
+	uint32_t constDiffuse = 0;
 	int elementCount = 0;
 
 	PmoVertexFormatFlags format = mesh.header.vertexFormat;
@@ -310,16 +310,16 @@ void CModelSection::LoadSection(PmoMesh& mesh)
 	}
 
 	// read verts
-	uint8* pData = mesh.vertexData.data();
+	uint8_t* pData = mesh.vertexData.data();
 	vertexData.reserve(mesh.header.vertexCount * elementCount);
 	for (int vi = 0; vi < mesh.header.vertexCount; vi++)
 	{
-		uint8* pVertStart = pData + (vi * mesh.header.vertexSize);
-		uint8 readPtr = 0;
+		uint8_t* pVertStart = pData + (vi * mesh.header.vertexSize);
+		uint8_t readPtr = 0;
 
-		uint8 temp8[4] = { 0 };
-		uint16 temp16[4] = { 0 };
-		uint32 temp32[4] = { 0 };
+		uint8_t temp8[4] = { 0 };
+		uint16_t temp16[4] = { 0 };
+		uint32_t temp32[4] = { 0 };
 		switch (format.weights)
 		{
 		case 0: // none 
@@ -355,8 +355,8 @@ void CModelSection::LoadSection(PmoMesh& mesh)
 				| (pVertStart[readPtr++] << 16) | (pVertStart[readPtr++] << 24);
 			temp32[1] = (pVertStart[readPtr++] << 0) | (pVertStart[readPtr++] << 8)
 				| (pVertStart[readPtr++] << 16) | (pVertStart[readPtr++] << 24);
-			vertexData.push_back(bit_cast<float, uint32>(temp32[0]));
-			vertexData.push_back(bit_cast<float, uint32>(temp32[1]));
+			vertexData.push_back(bit_cast<float, uint32_t>(temp32[0]));
+			vertexData.push_back(bit_cast<float, uint32_t>(temp32[1]));
 			break;
 		}
 
@@ -419,9 +419,9 @@ void CModelSection::LoadSection(PmoMesh& mesh)
 			temp16[0] = (pVertStart[readPtr++] << 0) | (pVertStart[readPtr++] << 8);
 			temp16[1] = (pVertStart[readPtr++] << 0) | (pVertStart[readPtr++] << 8);
 			temp16[2] = (pVertStart[readPtr++] << 0) | (pVertStart[readPtr++] << 8);
-			vertexData.push_back((float)bit_cast<int16, uint16>(temp16[0]) / 32767.0f);
-			vertexData.push_back((float)bit_cast<int16, uint16>(temp16[1]) / 32767.0f);
-			vertexData.push_back((float)bit_cast<int16, uint16>(temp16[2]) / 32767.0f);
+			vertexData.push_back((float)bit_cast<int16_t, uint16_t>(temp16[0]) / 32767.0f);
+			vertexData.push_back((float)bit_cast<int16_t, uint16_t>(temp16[1]) / 32767.0f);
+			vertexData.push_back((float)bit_cast<int16_t, uint16_t>(temp16[2]) / 32767.0f);
 			break;
 		case 3:
 			readPtr += ((0x4 - ((readPtr - 0) & 0x3)) & 0x3);
@@ -431,9 +431,9 @@ void CModelSection::LoadSection(PmoMesh& mesh)
 				| (pVertStart[readPtr++] << 16) | (pVertStart[readPtr++] << 24);
 			temp32[2] = (pVertStart[readPtr++] << 0) | (pVertStart[readPtr++] << 8)
 				| (pVertStart[readPtr++] << 16) | (pVertStart[readPtr++] << 24);
-			vertexData.push_back(bit_cast<float, uint32>(temp32[0]));
-			vertexData.push_back(bit_cast<float, uint32>(temp32[1]));
-			vertexData.push_back(bit_cast<float, uint32>(temp32[2]));
+			vertexData.push_back(bit_cast<float, uint32_t>(temp32[0]));
+			vertexData.push_back(bit_cast<float, uint32_t>(temp32[1]));
+			vertexData.push_back(bit_cast<float, uint32_t>(temp32[2]));
 		}
 	}
 }

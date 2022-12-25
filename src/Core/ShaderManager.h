@@ -1,7 +1,7 @@
 #pragma once
 #include "Common.h"
 #include "CShader.h"
-#include <map>
+#include <unordered_map>
 
 struct ShaderDef
 {
@@ -10,16 +10,16 @@ struct ShaderDef
 	std::string fragmentShaderPath;
 };
 
-class ShaderLibrary
+class CShaderManager
 {
 public:
-	ShaderLibrary();
-	ShaderLibrary(std::vector<ShaderDef>& shaders);
-	~ShaderLibrary();
+	CShaderManager();
+	CShaderManager(std::vector<ShaderDef>& shaders);
+	~CShaderManager();
 
 	bool AddShader(ShaderDef& shaderDef);
 	bool IsShaderAvailible(std::string& name);
 	std::shared_ptr<CShader> GetShader(const std::string& name);
 private:
-	std::map<std::string, std::shared_ptr<CShader>> m_shaderMap;
+	std::unordered_map<std::string, std::shared_ptr<CShader>> m_shaderMap;
 };

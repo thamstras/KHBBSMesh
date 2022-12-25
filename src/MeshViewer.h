@@ -4,6 +4,7 @@
 #include "Core/CCamera.h"
 #include "GraphicsContext.h"
 #include "Core/CoreRender.h"
+#include "CFileManager.h"
 
 namespace BBSMesh
 {
@@ -40,10 +41,14 @@ namespace BBSMesh
 		WindowData m_window;
 		MouseData m_mouse;
 
+		std::unique_ptr<CFileManager> m_fileManager;
+
 		std::shared_ptr<CCamera> m_currentCamera;
 		std::unique_ptr<GraphicsContext> m_graphicsContext;
 		std::shared_ptr<RenderContext> m_rootRenderContext;
 
 		bool Init();
+
+		void ProcessGUI();
 	};
 }

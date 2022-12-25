@@ -44,11 +44,11 @@ namespace BBS
 
 	struct VertexFlags
 	{
-		uint8 hasWeights : 1;
-		uint8 hasTex : 1;
-		uint8 hasVColor : 1;
-		uint8 hasPosition : 1;
-		uint8 hasCColor : 1;
+		uint8_t hasWeights : 1;
+		uint8_t hasTex : 1;
+		uint8_t hasVColor : 1;
+		uint8_t hasPosition : 1;
+		uint8_t hasCColor : 1;
 	};
 
 	inline bool operator==(const VertexFlags& left, const VertexFlags& right)
@@ -73,11 +73,11 @@ namespace BBS
 		int textureIndex;
 		int vertexCount;
 		GLenum primativeType;
-		std::vector<uint16> primCount;
+		std::vector<uint16_t> primCount;
 		VertexFlags flags;
 		std::vector<float> vertexData;
-		uint16 attributes;
-		uint32 globalColor;
+		uint16_t attributes;
+		uint32_t globalColor;
 
 		CModelSection();
 		void LoadSection(PmoMesh& mesh);
