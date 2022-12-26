@@ -36,7 +36,9 @@ PmoTexture ParsePmoTexture(std::ifstream& file)
     PmoTexture tex{};
     ReadStream(file, tex.dataOffset); 
     file.read(tex.resourceName, 0xC);
-    for (int i = 0; i < 4; i++) ReadStream(file, tex.unk_10[i]);
+    ReadStream(file, tex.scrollU);
+    ReadStream(file, tex.scrollV);
+    for (int i = 0; i < 2; i++) ReadStream(file, tex.padding[i]);
     return tex;
 }
 

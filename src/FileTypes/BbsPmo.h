@@ -158,7 +158,9 @@ struct PmoTexture
 {
     uint32_t dataOffset;
     char resourceName[0xC];
-    uint32_t unk_10[4];
+    float scrollU;
+    float scrollV;
+    uint32_t padding[2];
 };
 
 class PmoFile

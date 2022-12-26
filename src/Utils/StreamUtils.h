@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include "..\BTypes.h"
 
 // TODO: replace all usage of this function with the one below.
 template<typename T1>

@@ -1,5 +1,4 @@
 #pragma once
-#include "..\BTypes.h"
 
 constexpr uint32_t MagicCode(char a, char b, char c, char d)
 {

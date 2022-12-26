@@ -92,7 +92,7 @@ Tm2File Tm2File::ReadTm2File(std::ifstream& file, std::streamoff base)
 	return tm2;
 }
 
-uint16 Tm2File::pictureCount()
+uint16_t Tm2File::pictureCount()
 {
 	return header.pictureCount;
 }

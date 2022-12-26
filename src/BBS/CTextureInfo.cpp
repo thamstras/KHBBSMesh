@@ -2,12 +2,12 @@
 
 using namespace BBS;
 
-CTextureInfo::CTextureInfo(PmpTexEntry& texInfo, CTextureObject* texObj)
+CTextureInfo::CTextureInfo(PmoTexture& texInfo, CTextureObject* texObj)
 {
 	srcTexture = texObj;
-	name = std::string(texInfo.name, 12);
-	scrollSpeed_x = texInfo.scrollX;
-	scrollSpeed_y = texInfo.scrollY;
+	name = std::string(texInfo.resourceName, 12);
+	scrollSpeed_x = texInfo.scrollU;
+	scrollSpeed_y = texInfo.scrollV;
 	currentScroll = glm::vec2(0.0f);
 }
 

@@ -410,9 +410,9 @@ void CModelSection::LoadSection(PmoMesh& mesh)
 			temp8[0] = pVertStart[readPtr++];
 			temp8[1] = pVertStart[readPtr++];
 			temp8[2] = pVertStart[readPtr++];
-			vertexData.push_back((float)bit_cast<int8, uint8>(temp8[0]) / 127.0f);
-			vertexData.push_back((float)bit_cast<int8, uint8>(temp8[1]) / 127.0f);
-			vertexData.push_back((float)bit_cast<int8, uint8>(temp8[2]) / 127.0f);
+			vertexData.push_back((float)bit_cast<int8_t, uint8_t>(temp8[0]) / 127.0f);
+			vertexData.push_back((float)bit_cast<int8_t, uint8_t>(temp8[1]) / 127.0f);
+			vertexData.push_back((float)bit_cast<int8_t, uint8_t>(temp8[2]) / 127.0f);
 			break;
 		case 2:
 			readPtr += ((0x2 - ((readPtr - 0) & 0x1)) & 0x1);

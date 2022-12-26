@@ -4,14 +4,25 @@ using namespace BBSMesh;
 
 void MeshViewer::ProcessGUI()
 {
-	// #### MENU BAR ####
+	GUI_MenuBar();
+
+	GUI_SideBar();
+
+	GUI_Modals();
+}
+
+void MeshViewer::GUI_MenuBar()
+{
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
-				// TODO: Open
+				m_modalMessage = std::string("Loading...");
+				ImGui::OpenPopup("MessageModal");
+				ScheduleDelayedProcess(&MeshViewer::OpenFile);
+				ScheduleDelayedProcess(&MeshViewer::HideMessageModal);
 			}
 
 			if (ImGui::MenuItem("Export", "Ctrl+E", nullptr, false))
@@ -46,7 +57,27 @@ void MeshViewer::ProcessGUI()
 
 		ImGui::EndMainMenuBar();
 	}
+}
 
-	// #### SIDEBAR ####
-	// TODO
+void MeshViewer::GUI_SideBar()
+{
+
+}
+
+void MeshViewer::GUI_Modals()
+{
+	if (ImGui::BeginPopupModal("MessageModal"))
+	{
+		ImGui::Text(m_modalMessage.c_str());
+		ImGui::EndPopup();
+	}
+}
+
+void MeshViewer::HideMessageModal()
+{
+	if (ImGui::BeginPopupModal("MessageModal"))
+	{
+		ImGui::CloseCurrentPopup();
+		ImGui::EndPopup();
+	}
 }

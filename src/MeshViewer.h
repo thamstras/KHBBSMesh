@@ -5,6 +5,7 @@
 #include "GraphicsContext.h"
 #include "Core/CoreRender.h"
 #include "CFileManager.h"
+#include "BBS/CModelObject.h"
 
 namespace BBSMesh
 {
@@ -19,6 +20,8 @@ namespace BBSMesh
 
 	class MeshViewer
 	{
+		typedef void (MeshViewer::*DelayedFunc)();
+
 	public:
 		MeshViewer(int argc = 0, char** argv = nullptr);
 		~MeshViewer();
@@ -47,8 +50,28 @@ namespace BBSMesh
 		std::unique_ptr<GraphicsContext> m_graphicsContext;
 		std::shared_ptr<RenderContext> m_rootRenderContext;
 
+		std::vector<DelayedFunc> m_scheduledDelays;
+
+		std::string m_modalMessage;
+
+		BBS::CModelObject* m_model;
+
 		bool Init();
 
 		void ProcessGUI();
+		void Update(float deltaTime, double worldTime);
+		void Render();
+		void ProcessDelayed();
+
+		void ScheduleDelayedProcess(DelayedFunc func);
+
+		void OpenFile();
+		void CloseFile();
+		void ExportFile();
+		void HideMessageModal();
+
+		void GUI_MenuBar();
+		void GUI_SideBar();
+		void GUI_Modals();
 	};
 }

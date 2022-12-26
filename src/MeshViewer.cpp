@@ -7,6 +7,8 @@
 
 using namespace BBSMesh;
 
+constexpr float MAX_DELTA_TIME = 0.2f;
+
 /* 
 	### TODO ###
 	[X] Finish event handling
@@ -329,4 +331,28 @@ void MeshViewer::ProcessInput(GLFWwindow* window, float deltaTime, double worldT
 		else
 			m_currentCamera->MovementMultiplier = 1.0f;
 	}
+}
+
+void MeshViewer::Update(float deltaTime, double worldTime)
+{
+
+}
+
+void MeshViewer::Render()
+{
+	if (m_model != nullptr)
+		m_model->DoDraw(*m_rootRenderContext, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+}
+
+void MeshViewer::ScheduleDelayedProcess(DelayedFunc func)
+{
+	m_scheduledDelays.push_back(func);
+}
+
+void MeshViewer::ProcessDelayed()
+{
+	for (auto func : m_scheduledDelays)
+		std::invoke(func, this);
+
+	m_scheduledDelays.clear();
 }
