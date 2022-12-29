@@ -33,6 +33,12 @@ MeshViewer::MeshViewer(int argc, char** argv)
 	m_fileManager = std::make_unique<CFileManager>();
 }
 
+MeshViewer::~MeshViewer()
+{
+	// TODO
+	// Shouldn't be called until shutdown anyway...
+}
+
 void MeshViewer::Run()
 {
 	if (m_runState == RunState::QuitState)
@@ -69,7 +75,12 @@ void MeshViewer::Run()
 	m_graphicsContext = std::make_unique<GraphicsContext>(shaders);
 
 	m_rootRenderContext = m_graphicsContext->CreateRenderContext();
-	m_currentCamera = std::make_shared<CCamera>(glm::vec3(5.0f, 5.0f, 5.0f));
+	m_currentCamera = std::make_shared<CCamera>(glm::vec3(0.0f, 0.0f, -5.0f));
+	// TODO: We need a different way of handling shader selection. Once skeletal meshes are in
+	// this manual method is going to grow out of hand.
+	m_rootRenderContext->render.default_shader = "unlit_vcol_tex";
+	m_rootRenderContext->render.highlight_shader = "constant";
+	m_rootRenderContext->render.textureless_shader = "unlit_vcol";
 	
 	m_rootRenderContext->render.current_camera = m_currentCamera;
 	m_rootRenderContext->render.wireframe = false;
@@ -102,6 +113,9 @@ void MeshViewer::Run()
 		// ProcessInput before NewFrame so we have the newest camera transform
 		ProcessInput(m_window.window, deltaTime, worldTime);
 
+		// TODO: better place for frame width/height
+		m_rootRenderContext->env.frameHeight = m_window.height;
+		m_rootRenderContext->env.frameWidth = m_window.width;
 		m_rootRenderContext->NewFrame();
 		
 		// ProcessGUI first so changes take effect before we Update
@@ -335,13 +349,23 @@ void MeshViewer::ProcessInput(GLFWwindow* window, float deltaTime, double worldT
 
 void MeshViewer::Update(float deltaTime, double worldTime)
 {
+	for (auto& tex : m_textures)
+	{
+		if (tex != nullptr)
+			tex->Update(deltaTime, worldTime);
+	}
 
+	if (m_model != nullptr)
+	{
+		m_model->UpdateTextureOffsets();
+		m_rootRenderContext->AddToDrawList(LAYER_STATIC, m_model);
+		m_rootRenderContext->AddToDrawList(LAYER_DYNAMIC, m_model);
+	}
 }
 
 void MeshViewer::Render()
 {
-	if (m_model != nullptr)
-		m_model->DoDraw(*m_rootRenderContext, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+		m_rootRenderContext->Render();
 }
 
 void MeshViewer::ScheduleDelayedProcess(DelayedFunc func)

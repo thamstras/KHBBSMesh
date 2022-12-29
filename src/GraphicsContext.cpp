@@ -11,6 +11,7 @@ std::shared_ptr<RenderContext> GraphicsContext::CreateRenderContext()
 {
 	std::shared_ptr<RenderContext> context = std::make_shared<RenderContext>();
 	context->render.shaderLibrary = ShaderManager;
+	context->render.textureLibrary = TextureManager;
 	AllContexts.push_back(context);
 	return context;
 }

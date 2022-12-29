@@ -88,12 +88,20 @@ void CModelObject::LoadPmo(PmoFile& pmo, bool loadTextures)
 	for (PmoTexture& tex : pmo.textures)
 	{
 		this->textureNames.push_back(std::string(tex.resourceName, 12));
-		//if (loadTextures) LoadTexture(tex);
+		if (loadTextures) LoadTexture(tex);
 	}
+}
+
+void CModelObject::LoadTexture(PmoTexture& tex)
+{
+	// TODO: uuh, the PmoFile class doesn't load the actual texture data...
+	// I guess we're going to have to rely on the texture manager.
 }
 
 void CModelObject::LinkExtTextures(std::unordered_map<std::string, CTextureInfo*> textureMap)
 {
+	if (ownsTextures) return;
+
 	textureObjects.reserve(textureNames.size());
 	for (std::string& texName : textureNames)
 	{
@@ -240,6 +248,16 @@ void CModelObject::DoDraw(RenderContext& render, const glm::vec3& pos, const glm
 	{
 		if (mesh1) mesh1->Draw(render, pos, rot, scale);
 	}
+}
+
+void CModelObject::DoDraw(RenderContext& context)
+{
+	DoDraw(context, glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f));
+}
+
+float CModelObject::CalcZ(const RenderContext& context) const
+{
+	return context.render.nearClip + FLT_EPSILON;
 }
 
 VertexFlags BBS::Merge(const VertexFlags& a, const VertexFlags& b)

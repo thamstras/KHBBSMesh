@@ -54,7 +54,8 @@ namespace BBSMesh
 
 		std::string m_modalMessage;
 
-		BBS::CModelObject* m_model;
+		std::vector<BBS::CTextureInfo*> m_textures;
+		BBS::CModelObject* m_model = nullptr;
 
 		bool Init();
 

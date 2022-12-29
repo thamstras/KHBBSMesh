@@ -12,18 +12,21 @@ namespace BBS
 
 	class CModelSection;
 
-	class CModelObject
+	class CModelObject : public CRenderObject
 	{
 	public:
 		CModelObject();
 		~CModelObject();
 		void LoadPmo(PmoFile& pmo, bool loadTextures);
-		// TODO: void LoadTexture(PMO_TEXINFO* pTexInfo);
+		void LoadTexture(PmoTexture& texInfo);
 		void LinkExtTextures(std::unordered_map<std::string, CTextureInfo*> textureMap);
 		void UpdateTextureOffsets();
 
 		void BuildMesh();
 		void DoDraw(RenderContext& context, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scale);
+
+		virtual void DoDraw(RenderContext& context) override;
+		virtual float CalcZ(const RenderContext& context) const override;
 
 		float scale;
 		glm::vec4 bbox[8];

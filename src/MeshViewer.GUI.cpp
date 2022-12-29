@@ -20,9 +20,9 @@ void MeshViewer::GUI_MenuBar()
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
 				m_modalMessage = std::string("Loading...");
-				ImGui::OpenPopup("MessageModal");
+				//ImGui::OpenPopup("MessageModal");
 				ScheduleDelayedProcess(&MeshViewer::OpenFile);
-				ScheduleDelayedProcess(&MeshViewer::HideMessageModal);
+				//ScheduleDelayedProcess(&MeshViewer::HideMessageModal);
 			}
 
 			if (ImGui::MenuItem("Export", "Ctrl+E", nullptr, false))
@@ -75,9 +75,10 @@ void MeshViewer::GUI_Modals()
 
 void MeshViewer::HideMessageModal()
 {
-	if (ImGui::BeginPopupModal("MessageModal"))
+	// TODO: Delayed funcs are called "outside" of a frame so this doesn't work.
+	/*if (ImGui::BeginPopupModal("MessageModal"))
 	{
 		ImGui::CloseCurrentPopup();
 		ImGui::EndPopup();
-	}
+	}*/
 }
