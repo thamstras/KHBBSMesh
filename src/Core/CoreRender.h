@@ -1,6 +1,7 @@
 #pragma once
 #include "..\Common.h"
 #include "ShaderManager.h"
+#include "TextureManager.h"
 
 enum ERenderLayer
 {
@@ -58,6 +59,8 @@ struct RenderContext
 		float fogNear;
 		float fogFar;
 		glm::vec4 clearColor;
+		int frameWidth;
+		int frameHeight;
 	} env;
 
 	struct {
@@ -89,6 +92,7 @@ struct RenderContext
 		std::string textureless_shader;
 
 		std::shared_ptr<CShaderManager> shaderLibrary;
+		std::shared_ptr<CTextureManager> textureLibrary;
 
 	} render;
 

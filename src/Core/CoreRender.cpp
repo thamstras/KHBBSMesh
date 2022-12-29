@@ -41,7 +41,7 @@ void RenderContext::NewFrame()
 	render.guiDrawList.clear();
 
 	render.viewMatrix = render.current_camera->GetViewMatrix();
-	render.projectionMatrix = glm::perspective(glm::radians(render.current_camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, render.nearClip, render.farClip);
+	render.projectionMatrix = glm::perspective(glm::radians(render.current_camera->Zoom), (float)env.frameWidth / (float)env.frameHeight, render.nearClip, render.farClip);
 	render.skyViewMatrix = glm::mat4(glm::mat3(render.viewMatrix));
 }
 

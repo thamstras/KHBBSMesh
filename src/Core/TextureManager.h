@@ -9,8 +9,8 @@ public:
 	CTextureManager();
 	~CTextureManager();
 
-	bool AddTexture(/* TODO */);
-	// TODO: bool RemoveTexture(std::string& name);
+	bool AddTexture(std::string name, CTexture* texture);
+	void PruneTextures();
 	bool IsTextureAvailible(std::string& name);
 	std::shared_ptr<CTexture> GetTexture(const std::string& name);
 private:

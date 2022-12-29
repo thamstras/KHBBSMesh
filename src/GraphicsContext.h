@@ -9,9 +9,9 @@ class GraphicsContext
 public:
 	GraphicsContext(std::vector<ShaderDef> initialShaders);
 
-	std::unique_ptr<CShaderManager> ShaderManager;
+	std::shared_ptr<CShaderManager> ShaderManager;
 
-	std::unique_ptr<CTextureManager> TextureManager;
+	std::shared_ptr<CTextureManager> TextureManager;
 
 	std::shared_ptr<RenderContext> CreateRenderContext();
 
