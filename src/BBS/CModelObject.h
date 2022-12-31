@@ -16,7 +16,7 @@ namespace BBS
 	{
 	public:
 		CModelObject();
-		~CModelObject();
+		virtual ~CModelObject();
 		void LoadPmo(PmoFile& pmo, bool loadTextures);
 		void LoadTexture(PmoTexture& texInfo);
 		void LinkExtTextures(std::unordered_map<std::string, CTextureInfo*> textureMap);

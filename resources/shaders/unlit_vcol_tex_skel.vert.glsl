@@ -11,8 +11,8 @@ layout(location = 2) in vec2 tex;
 // general approach?
 layout(location = 3) in ivec4 boneIdxLo;
 layout(location = 4) in ivec4 boneIdxHi;
-layout(location = 3) in vec4 boneWeightLo;
-layout(location = 4) in vec4 boneWeightHi;
+layout(location = 5) in vec4 boneWeightLo;
+layout(location = 6) in vec4 boneWeightHi;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -46,17 +46,16 @@ float GetBoneWeight(int boneNum)
 
 void main()
 {
-	vec4 blendedPosition;
+	vec3 pos3 = vec3(position);
+	vec4 blendedPosition = vec4(0.0);
 	for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
 	{
 		int boneIdx = GetBoneIdx(i);
-		if (boneIdx == -1)
+		if (boneIdx == -1 || boneIdx >= MAX_BONES)
 			continue;
 
-		// TODO: I'm not thrilled with this. Can we use the bone transform directly?
-		//mat4 boneTransform = GetBoneTransform(boneIdx);
 		mat4 boneTransform = boneTransforms[boneIdx];
-		vec4 bonePosition = boneTransform * position;
+		vec4 bonePosition = boneTransform * vec4(pos3, 1.0);
 		blendedPosition += bonePosition * GetBoneWeight(i);
 	}
 

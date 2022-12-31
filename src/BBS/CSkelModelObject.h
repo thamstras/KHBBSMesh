@@ -5,16 +5,28 @@
 #include "Core/CoreRender.h"
 #include <array>
 #include "Core/CSkeleton.h"
+#include "Core/CSkelMesh.h"
 
 namespace BBS
 {
 
 	class CSkelModelSection;
 
-	class CSkelModelObject
+	class CSkelModelObject : public CRenderObject
 	{
 	public:
+		CSkelModelObject();
+		virtual ~CSkelModelObject();
+
 		void LoadPmo(PmoFile& file, bool ownsTextures);
+		void LinkExtTextures(std::unordered_map<std::string, CTextureInfo*> textureMap);
+		void UpdateTextureOffsets();
+
+		void BuildMesh();
+		void DoDraw(RenderContext& context, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scale);
+
+		virtual void DoDraw(RenderContext& context) override;
+		virtual float CalcZ(const RenderContext& context) const override;
 
 		float scale;
 		glm::vec4 bbox[8];
@@ -26,12 +38,12 @@ namespace BBS
 		bool ownsTextures;
 		std::vector<CTextureInfo*> textureObjects;
 
-		// TODO: CSkelMesh* mesh0;
-		// TODO: CSkelMesh* mesh1;
+		CSkelMesh* mesh0;
+		CSkelMesh* mesh1;
 		CSkeleton* skel;
 
 	private:
-		// TODO: CSkelMesh* BuildMesh(std::vector<CModelSection*>& sections);
+		CSkelMesh* BuildMesh(std::vector<CSkelModelSection*>& sections);
 	};
 
 	class CSkelModelSection

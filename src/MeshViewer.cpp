@@ -14,7 +14,7 @@ constexpr float MAX_DELTA_TIME = 0.2f;
 	[X] Finish event handling
 	[X] New FileManager
 	[X] struct GraphicsContext + CTextureManager
-	[ ] BBS/CSkelModelObject + Core/CSkelMesh
+	[X] BBS/CSkelModelObject + Core/CSkelMesh
 	[ ] Draw mesh
 	[ ] Draw skeleton (Will need to sort out DebugDrawLine properly, eg: draw all the lines in one GL_LINES draw call via a GL_STREAM_DRAW buffer)
 	[ ] Initial GUI - modify joint transforms (manually 'animate')
@@ -61,6 +61,11 @@ void MeshViewer::Run()
 			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "unlit_vcol_tex.frag.glsl")
 		},
 		{
+			"unlit_vcol_tex_skel",
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "unlit_vcol_tex_skel.vert.glsl"),
+			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "unlit_vcol_tex.frag.glsl")
+		},
+		{
 			"constant",
 			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "constant.vert.glsl"),
 			m_fileManager->GetResourcePath(EResourceType::RSRC_SHADER, "constant.frag.glsl")
@@ -78,7 +83,7 @@ void MeshViewer::Run()
 	m_currentCamera = std::make_shared<CCamera>(glm::vec3(0.0f, 0.0f, -5.0f));
 	// TODO: We need a different way of handling shader selection. Once skeletal meshes are in
 	// this manual method is going to grow out of hand.
-	m_rootRenderContext->render.default_shader = "unlit_vcol_tex";
+	m_rootRenderContext->render.default_shader = "unlit_vcol_tex_skel";
 	m_rootRenderContext->render.highlight_shader = "constant";
 	m_rootRenderContext->render.textureless_shader = "unlit_vcol";
 	
@@ -89,9 +94,9 @@ void MeshViewer::Run()
 	m_rootRenderContext->render.no_texture = false;
 	m_rootRenderContext->render.nearClip = 0.1f;
 	m_rootRenderContext->render.farClip = 1000.0f;
-	m_rootRenderContext->render.no_fog = false;
+	m_rootRenderContext->render.no_fog = true;
 	m_rootRenderContext->env.fogColor = glm::vec4(1.0f);
-	m_rootRenderContext->env.fogNear = 1000.0f;
+	m_rootRenderContext->env.fogNear = 1000.0f - FLT_EPSILON;
 	m_rootRenderContext->env.fogFar = 1000.0f;
 	m_rootRenderContext->env.clearColor = glm::vec4(0.2f, 0.3f, 0.3f, 1.0f);
 
@@ -358,7 +363,7 @@ void MeshViewer::Update(float deltaTime, double worldTime)
 	if (m_model != nullptr)
 	{
 		m_model->UpdateTextureOffsets();
-		m_rootRenderContext->AddToDrawList(LAYER_STATIC, m_model);
+		//m_rootRenderContext->AddToDrawList(LAYER_STATIC, m_model);
 		m_rootRenderContext->AddToDrawList(LAYER_DYNAMIC, m_model);
 	}
 }

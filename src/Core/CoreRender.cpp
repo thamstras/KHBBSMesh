@@ -69,7 +69,7 @@ void RenderContext::Render()
 	standardShader->setVec4("fog_color", env.fogColor);
 	if (render.no_fog)
 	{
-		standardShader->setFloat("fog_near", render.farClip);
+		standardShader->setFloat("fog_near", render.farClip - FLT_EPSILON);
 		standardShader->setFloat("fog_far", render.farClip);
 	}
 	else
@@ -97,12 +97,13 @@ void RenderContext::Render()
 	for (CRenderObject* const& renderObject : render.staticDrawList)
 		renderObject->DoDraw(*this);
 
-	glDepthMask(GL_FALSE);
+	//glDepthMask(GL_FALSE);
 	render.currentPass = LAYER_DYNAMIC;
 	std::sort(render.dynamicDrawList.begin(), render.dynamicDrawList.end(), comp);
 	for (CRenderObject* const& renderObject : render.dynamicDrawList)
 		renderObject->DoDraw(*this);
 
+	glDepthMask(GL_FALSE);
 	render.currentPass = LAYER_OVERLAY;
 	for (CRenderObject* const& renderObject : render.overlayDrawList)
 		renderObject->DoDraw(*this);

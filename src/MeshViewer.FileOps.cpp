@@ -31,10 +31,11 @@ void MeshViewer::OpenFile()
 	m_textures.clear();
 	m_rootRenderContext->render.textureLibrary->PruneTextures();
 
-	m_model = new BBS::CModelObject();
+	m_model = new BBS::CSkelModelObject();
+	//m_model = new BBS::CModelObject();
 	m_model->LoadPmo(newFile, false);
 
-	 auto texMap = std::unordered_map<std::string, BBS::CTextureInfo*>();
+	auto texMap = std::unordered_map<std::string, BBS::CTextureInfo*>();
 	for (auto& texInfo : newFile.textures)
 	{
 		fs.seekg(texInfo.dataOffset);

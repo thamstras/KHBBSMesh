@@ -6,6 +6,7 @@
 #include "Core/CoreRender.h"
 #include "CFileManager.h"
 #include "BBS/CModelObject.h"
+#include "BBS/CSkelModelObject.h"
 
 namespace BBSMesh
 {
@@ -55,7 +56,8 @@ namespace BBSMesh
 		std::string m_modalMessage;
 
 		std::vector<BBS::CTextureInfo*> m_textures;
-		BBS::CModelObject* m_model = nullptr;
+		BBS::CSkelModelObject* m_model = nullptr;
+		//BBS::CModelObject* m_model = nullptr;
 
 		bool Init();
 

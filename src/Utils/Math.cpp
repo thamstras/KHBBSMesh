@@ -370,3 +370,16 @@ bool Intersect(AABBox b, Frustum f)
 {
 	return Intersect(f, b);
 }
+
+glm::vec4 Vector4FromArray(float in[4])
+{
+	return glm::vec4(in[0], in[1], in[2], in[3]);
+}
+
+glm::mat4 Matrix44FromArrays(float in[4][4])
+{
+	return glm::mat4(Vector4FromArray(in[0]),
+		Vector4FromArray(in[1]),
+		Vector4FromArray(in[2]),
+		Vector4FromArray(in[3]));
+}

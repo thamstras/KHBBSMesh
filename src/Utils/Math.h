@@ -122,3 +122,6 @@ bool Intersect(Frustum f, Sphere s);
 bool Intersect(Sphere s, Frustum f);
 bool Intersect(Frustum f, AABBox b);
 bool Intersect(AABBox b, Frustum f);
+
+glm::vec4 Vector4FromArray(float in[4]);
+glm::mat4 Matrix44FromArrays(float in[4][4]);

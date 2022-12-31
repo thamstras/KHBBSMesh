@@ -3,6 +3,7 @@
 
 class CBone
 {
+public:
 	int index;
 	int parentIndex;
 	std::string name;
