@@ -20,7 +20,7 @@ constexpr float MAX_DELTA_TIME = 0.2f;
 	[X] CAnimationDriver - updates a skeleton with animation data
 	[X] Initial GUI - modify joint transforms (manually 'animate')
 	[X] Draw skeleton (Will need to sort out DebugDrawLine properly, eg: draw all the lines in one GL_LINES draw call via a GL_STREAM_DRAW buffer)
-	[ ] BBS PAM File reader
+	[X] BBS PAM File reader
 	[ ] CPAMAnimationProvider - provides animation data to driver
 */
 

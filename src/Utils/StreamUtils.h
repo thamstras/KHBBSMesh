@@ -9,7 +9,7 @@ void ReadStream(std::istream& stream, T1& out_var) { stream.read((char*)(&out_va
 template<typename T1>
 T1 ReadStream(std::istream& stream)
 {
-	T1 var;
+	T1 var{};
 	stream.read((char*)(&var), sizeof(T1));
 	return var;
 }
@@ -17,7 +17,7 @@ T1 ReadStream(std::istream& stream)
 template<typename T1>
 void ReadStreamArr(std::istream& stream, T1* arr, size_t count)
 {
-	for(int i = 0; i < count; i++) arr[i] = ReadStream<T1>(stream);
+	for(size_t i = 0; i < count; i++) arr[i] = ReadStream<T1>(stream);
 }
 
 std::vector<uint8_t> ReadBlob(std::istream& stream, size_t size);
