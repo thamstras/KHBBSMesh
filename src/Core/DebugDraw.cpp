@@ -36,7 +36,24 @@ public:
 	virtual float CalcZ(const RenderContext& context) const override;
 };
 
+class CDebugLineHelper
+{
+private:
+	struct LineVert
+	{
+		float x, y, z, r, g, b;
+	};
+	std::vector<LineVert> verts;
+	GLuint VBO = 0, VAO = 0;
+public:
+	CDebugLineHelper();
+	~CDebugLineHelper();
+	void DoDraw(RenderContext& context);
+	void Add(glm::vec3 start, glm::vec3 end, glm::vec3 color);
+};
+
 std::vector<CDebugObject*> DebugDraw::activeDebugObjects;
+CDebugLineHelper* DebugDraw::debugLines = nullptr;
 GLuint CDebugCube::VBO = 0;
 GLuint CDebugCube::VAO = 0;
 
@@ -45,6 +62,12 @@ void DebugDraw::DebugCube(RenderContext& context, glm::vec3 position, glm::vec3 
 	CDebugCube* cube = new CDebugCube(position, rotation, scale, color, 0.0f);
 	context.render.overlayDrawList.push_back(cube);
 	DebugDraw::AddDebugObject(cube);
+}
+
+void DebugDraw::DebugLine(RenderContext& context, glm::vec3 start, glm::vec3 end, glm::vec3 color)
+{
+	if (debugLines == nullptr) debugLines = new CDebugLineHelper();
+	debugLines->Add(start, end, color);
 }
 
 float debug_cube_verts[] =
@@ -126,6 +149,68 @@ float CDebugCube::CalcZ(const RenderContext& context) const
 	return glm::dot(this->pos - context.render.current_camera->Position, context.render.current_camera->Front);
 }
 
+CDebugLineHelper::CDebugLineHelper()
+{
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LineVert), (void*)(offsetof(LineVert, x)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVert), (void*)(offsetof(LineVert, r)));
+
+	glBindVertexArray(0);
+
+}
+
+CDebugLineHelper::~CDebugLineHelper()
+{
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+}
+
+void CDebugLineHelper::Add(glm::vec3 start, glm::vec3 end, glm::vec3 color)
+{
+	LineVert a = LineVert();
+	a.x = start.x;
+	a.y = start.y;
+	a.z = start.z;
+	a.r = color.r;
+	a.g = color.g;
+	a.b = color.b;
+	verts.push_back(a);
+
+	LineVert b = LineVert();
+	b.x = end.x;
+	b.y = end.y;
+	b.z = end.z;
+	b.r = color.r;
+	b.g = color.g;
+	b.b = color.b;
+	verts.push_back(b);
+}
+
+void CDebugLineHelper::DoDraw(RenderContext& context)
+{
+	glBindBuffer(GL_COPY_WRITE_BUFFER, VBO);
+	glBufferData(GL_COPY_WRITE_BUFFER, sizeof(LineVert) * verts.size(), verts.data(), GL_STREAM_DRAW);
+
+	std::shared_ptr<CShader> shader = context.render.shaderLibrary->GetShader("unlit_vcol"s);
+	shader->use();
+	shader->setMat4("model"s, glm::mat4(1.0f));
+	shader->setMat4("view"s, context.render.viewMatrix);
+	shader->setMat4("projection"s, context.render.projectionMatrix);
+
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_LINES, 0, verts.size());
+
+	verts.clear();
+}
+
 void DebugDraw::AddDebugObject(CDebugObject* obj)
 {
 	// try find an empty slot first
@@ -170,4 +255,13 @@ void DebugDraw::Teardown()
 	glDeleteBuffers(1, &CDebugCube::VBO);
 	CDebugCube::VAO = 0;
 	CDebugCube::VBO = 0;
+
+	if (debugLines != nullptr) delete debugLines;
+	debugLines = nullptr;
+}
+
+void DebugDraw::DrawLines(RenderContext& context)
+{
+	if (debugLines != nullptr)
+		debugLines->DoDraw(context);
 }

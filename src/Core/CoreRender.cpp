@@ -1,6 +1,7 @@
 #include "CoreRender.h"
 #include "CCamera.h"
 #include <algorithm>
+#include "DebugDraw.h"
 
 CRenderObject::~CRenderObject() {};
 
@@ -113,5 +114,6 @@ void RenderContext::Render()
 	render.currentPass = LAYER_GUI;
 	for (CRenderObject* const& renderObject : render.guiDrawList)
 		renderObject->DoDraw(*this);
+	DebugDraw::DrawLines(*this);
 	glEnable(GL_DEPTH_TEST);
 }

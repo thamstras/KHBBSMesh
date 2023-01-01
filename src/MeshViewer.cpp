@@ -4,6 +4,7 @@
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "Core/DebugDraw.h"
 
 using namespace BBSMesh;
 
@@ -15,12 +16,12 @@ constexpr float MAX_DELTA_TIME = 0.2f;
 	[X] New FileManager
 	[X] struct GraphicsContext + CTextureManager
 	[X] BBS/CSkelModelObject + Core/CSkelMesh
-	[ ] Draw mesh
-	[ ] Draw skeleton (Will need to sort out DebugDrawLine properly, eg: draw all the lines in one GL_LINES draw call via a GL_STREAM_DRAW buffer)
-	[ ] Initial GUI - modify joint transforms (manually 'animate')
+	[X] Draw mesh
+	[X] CAnimationDriver - updates a skeleton with animation data
+	[X] Initial GUI - modify joint transforms (manually 'animate')
+	[X] Draw skeleton (Will need to sort out DebugDrawLine properly, eg: draw all the lines in one GL_LINES draw call via a GL_STREAM_DRAW buffer)
 	[ ] BBS PAM File reader
-	[ ] CAnimationDriver - updates a skeleton with animation data (Might need to do this earlier to make the gui work?)
-	[ ] CAnimationProvider - provides animation data to driver
+	[ ] CPAMAnimationProvider - provides animation data to driver
 */
 
 MeshViewer::MeshViewer(int argc, char** argv)
@@ -350,6 +351,9 @@ void MeshViewer::ProcessInput(GLFWwindow* window, float deltaTime, double worldT
 		else
 			m_currentCamera->MovementMultiplier = 1.0f;
 	}
+
+	if (glfwWindowShouldClose(m_window.window))
+		m_shouldQuit = true;
 }
 
 void MeshViewer::Update(float deltaTime, double worldTime)
@@ -360,12 +364,21 @@ void MeshViewer::Update(float deltaTime, double worldTime)
 			tex->Update(deltaTime, worldTime);
 	}
 
+	if (m_guiAnim != nullptr) m_guiAnim->Update(deltaTime, worldTime);
+
+	// TODO: I think CSkelModelObject would benifit from an Update function
 	if (m_model != nullptr)
 	{
 		m_model->UpdateTextureOffsets();
+
+		if (m_model->animDriver != nullptr)
+			m_model->animDriver->Update(deltaTime, worldTime);
+
 		//m_rootRenderContext->AddToDrawList(LAYER_STATIC, m_model);
 		m_rootRenderContext->AddToDrawList(LAYER_DYNAMIC, m_model);
 	}
+
+	if (drawSkel) DrawSkeleton();
 }
 
 void MeshViewer::Render()
@@ -384,4 +397,20 @@ void MeshViewer::ProcessDelayed()
 		std::invoke(func, this);
 
 	m_scheduledDelays.clear();
+}
+
+void MeshViewer::DrawSkeleton()
+{
+	if (m_model == nullptr)
+		return;
+	auto pose = m_model->animDriver->GetPose();
+	for (auto& bone : pose)
+	{
+		if (bone.parentIdx != -1)
+		{
+			auto bonePos = glm::vec3(pose[bone.idx].transform[3]);
+			auto parentPos = glm::vec3(pose[bone.parentIdx].transform[3]);
+			DebugDraw::DebugLine(*m_rootRenderContext, parentPos, bonePos, glm::vec3(1.0f, 0.0f, 0.0f));
+		}
+	}
 }

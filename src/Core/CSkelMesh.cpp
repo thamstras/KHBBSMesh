@@ -121,14 +121,26 @@ void CSkelMesh::Draw(RenderContext& context, const glm::vec3& position, const gl
 	shader->setMat4("view"s, context.render.viewMatrix);	
 	shader->setMat4("projection"s, context.render.projectionMatrix);
 
-	//if (animDriver != nullptr)
-	//{
-	//	// todo
-	// REMEMBER the array you get back from the driver might be smaller than MAX_BONE
-	//}
-	//else
+	const int MAX_BONE = 255;
+	if (driver != nullptr)
 	{
-		const int MAX_BONE = 255;
+		//REMEMBER the array you get back from the driver might be smaller than MAX_BONE
+		std::vector<glm::mat4> bones = driver->GetTransforms();
+		glm::mat4 identity = glm::mat4(1.0f);
+		int b = 0;
+		for (; b < std::min(MAX_BONE, (int)bones.size()); b++)
+		{
+			std::string uniform = std::format("boneTransforms[{}]", b);
+			shader->setMat4(uniform, bones[b]);
+		}
+		for (; b < MAX_BONE; b++)
+		{
+			std::string uniform = std::format("boneTransforms[{}]", b);
+			shader->setMat4(uniform, identity);
+		}
+	}
+	else
+	{
 		glm::mat4 identity = glm::mat4(1.0f);
 		for (int b = 0; b < MAX_BONE; b++)
 		{

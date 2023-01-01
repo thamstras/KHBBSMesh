@@ -7,6 +7,7 @@
 #include "CFileManager.h"
 #include "BBS/CModelObject.h"
 #include "BBS/CSkelModelObject.h"
+#include "CGuiAnimationProvider.h"
 
 namespace BBSMesh
 {
@@ -57,7 +58,10 @@ namespace BBSMesh
 
 		std::vector<BBS::CTextureInfo*> m_textures;
 		BBS::CSkelModelObject* m_model = nullptr;
+		CGUIAnimationProvider* m_guiAnim = nullptr;
 		//BBS::CModelObject* m_model = nullptr;
+
+		bool drawSkel = false;
 
 		bool Init();
 
@@ -68,13 +72,18 @@ namespace BBSMesh
 
 		void ScheduleDelayedProcess(DelayedFunc func);
 
-		void OpenFile();
-		void CloseFile();
-		void ExportFile();
+		void OpenModelFile();
+		void CloseModelFile();
+		void ExportModelFile();
+		void OpenAnimFile();
+		void CloseAnimFile();
+		void ExportAnimFile();
 		void HideMessageModal();
 
 		void GUI_MenuBar();
 		void GUI_SideBar();
 		void GUI_Modals();
+
+		void DrawSkeleton();
 	};
 }

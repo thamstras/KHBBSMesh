@@ -6,6 +6,7 @@
 #include <array>
 #include "Core/CSkeleton.h"
 #include "Core/CSkelMesh.h"
+#include "Core/CAnimationDriver.h"
 
 namespace BBS
 {
@@ -28,6 +29,8 @@ namespace BBS
 		virtual void DoDraw(RenderContext& context) override;
 		virtual float CalcZ(const RenderContext& context) const override;
 
+		void SetAnimDriver(CAnimationDriver* driver);
+
 		float scale;
 		glm::vec4 bbox[8];
 		AABBox boundingBox;
@@ -41,6 +44,7 @@ namespace BBS
 		CSkelMesh* mesh0;
 		CSkelMesh* mesh1;
 		CSkeleton* skel;
+		CAnimationDriver* animDriver;
 
 	private:
 		CSkelMesh* BuildMesh(std::vector<CSkelModelSection*>& sections);

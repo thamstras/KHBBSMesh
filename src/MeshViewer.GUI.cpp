@@ -17,27 +17,45 @@ void MeshViewer::GUI_MenuBar()
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("Open", "Ctrl+O"))
+			if (ImGui::BeginMenu("Open..."))
 			{
-				m_modalMessage = std::string("Loading...");
-				//ImGui::OpenPopup("MessageModal");
-				ScheduleDelayedProcess(&MeshViewer::OpenFile);
-				//ScheduleDelayedProcess(&MeshViewer::HideMessageModal);
+				if (ImGui::MenuItem("Model", "Ctrl+O"))
+				{
+					m_modalMessage = std::string("Loading...");
+					//ImGui::OpenPopup("MessageModal");
+					ScheduleDelayedProcess(&MeshViewer::OpenModelFile);
+					//ScheduleDelayedProcess(&MeshViewer::HideMessageModal);
+				}
+
+				if (ImGui::MenuItem("Anim", "Ctrl+A", nullptr, false))
+				{
+					//ScheduleDelayedProcess(&MeshViewer::OpenAnimFile);
+				}
+
+				ImGui::EndMenu();
 			}
 
-			if (ImGui::MenuItem("Export", "Ctrl+E", nullptr, false))
+			if (ImGui::BeginMenu("Export..."))
 			{
 				// TODO: Export
+				ImGui::MenuItem("Model", nullptr, nullptr, false);
+				ImGui::MenuItem("Anim", nullptr, nullptr, false);
+
+				ImGui::EndMenu();
 			}
 
-			if (ImGui::MenuItem("Close"))
+			if (ImGui::BeginMenu("Close..."))
 			{
 				// TODO: Close
+				ImGui::MenuItem("Model", nullptr, nullptr, false);
+				ImGui::MenuItem("Anim", nullptr, nullptr, false);
+
+				ImGui::EndMenu();
 			}
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Exit", "Alt+F4"))
+			if (ImGui::MenuItem("Exit", "Esc"))
 			{
 				m_shouldQuit = true;
 			}
@@ -61,7 +79,17 @@ void MeshViewer::GUI_MenuBar()
 
 void MeshViewer::GUI_SideBar()
 {
+	if (ImGui::Begin("Skeleton"))
+	{
+		ImGui::Checkbox("Draw Skeleton", &this->drawSkel);
+		ImGui::Separator();
 
+		if (m_guiAnim != nullptr)
+			m_guiAnim->GUI_DrawControls();
+		else
+			ImGui::Text("Nothing loaded.");
+	}
+	ImGui::End();
 }
 
 void MeshViewer::GUI_Modals()

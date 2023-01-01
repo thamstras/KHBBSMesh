@@ -99,6 +99,7 @@ void CSkelModelObject::LoadPmo(PmoFile& pmo, bool loadTextures)
 			CBone bone = CBone();
 			bone.index = pmoBone.index;
 			bone.parentIndex = pmoBone.parent;
+			if (bone.parentIndex == UINT16_MAX) bone.parentIndex = -1;
 			bone.name = std::string(pmoBone.name, 0x10);
 			bone.transform = Matrix44FromArrays(pmoBone.transform);
 			bone.inverseTransform = Matrix44FromArrays(pmoBone.transformInverse);
@@ -475,4 +476,13 @@ void CSkelModelObject::DoDraw(RenderContext& context)
 float CSkelModelObject::CalcZ(const RenderContext& context) const
 {
 	return context.render.nearClip + FLT_EPSILON;
+}
+
+void CSkelModelObject::SetAnimDriver(CAnimationDriver* driver)
+{
+	animDriver = driver;
+	if (mesh0 != nullptr)
+		mesh0->driver = driver;
+	if (mesh1 != nullptr)
+		mesh1->driver = driver;
 }

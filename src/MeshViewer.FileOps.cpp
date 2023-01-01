@@ -6,7 +6,7 @@
 
 using namespace BBSMesh;
 
-void MeshViewer::OpenFile()
+void MeshViewer::OpenModelFile()
 {
 	std::string path;
 	if (!m_fileManager->OpenFileWindow(path))
@@ -26,10 +26,7 @@ void MeshViewer::OpenFile()
 		return;
 	}
 
-	if (m_model != nullptr) delete m_model;
-	for (auto tex : m_textures) if (tex != nullptr) delete tex;
-	m_textures.clear();
-	m_rootRenderContext->render.textureLibrary->PruneTextures();
+	if (m_model != nullptr) CloseModelFile();
 
 	m_model = new BBS::CSkelModelObject();
 	//m_model = new BBS::CModelObject();
@@ -54,4 +51,20 @@ void MeshViewer::OpenFile()
 	m_model->LinkExtTextures(texMap);
 	m_model->BuildMesh();
 	//m_model->LinkExtTextures(m_rootRenderContext->render.textureLibrary.get());
+
+	m_guiAnim = new CGUIAnimationProvider(*m_model->skel);
+	m_model->SetAnimDriver(new CAnimationDriver(*m_model->skel));
+	m_model->animDriver->SetAnimation(m_guiAnim);
+}
+
+void MeshViewer::CloseModelFile()
+{
+	// if (animLoaded) CloseAnimFile();
+
+	if (m_model != nullptr) delete m_model;
+	m_model = nullptr;
+	for (auto tex : m_textures) if (tex != nullptr) delete tex;
+	m_textures.clear();
+	m_rootRenderContext->render.textureLibrary->PruneTextures();
+	if (m_guiAnim) delete m_guiAnim;
 }

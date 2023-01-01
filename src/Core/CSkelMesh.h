@@ -3,6 +3,7 @@
 #include "..\Core\CMesh.h"
 #include "..\Core\CTexture.h"
 #include "CoreRender.h"
+#include "CAnimationDriver.h"
 
 class CSkelMesh;
 
@@ -42,6 +43,8 @@ public:
 	glm::vec3 Pos, Rot, Scale;
 
 	GLuint VAO, VBO;
+
+	CAnimationDriver* driver;
 
 	void Draw(RenderContext& context);
 	void Draw(RenderContext& context, const glm::vec3& position, const glm::vec3& rotation, const glm::vec3& scale);
