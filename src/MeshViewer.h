@@ -8,6 +8,7 @@
 #include "BBS/CModelObject.h"
 #include "BBS/CSkelModelObject.h"
 #include "CGuiAnimationProvider.h"
+#include "BBS/CAnimSet.h"
 
 namespace BBSMesh
 {
@@ -23,6 +24,12 @@ namespace BBSMesh
 	class MeshViewer
 	{
 		typedef void (MeshViewer::*DelayedFunc)();
+
+		enum class AnimType
+		{
+			GuiAnim,
+			FileAnim
+		};
 
 	public:
 		MeshViewer(int argc = 0, char** argv = nullptr);
@@ -59,7 +66,8 @@ namespace BBSMesh
 		std::vector<BBS::CTextureInfo*> m_textures;
 		BBS::CSkelModelObject* m_model = nullptr;
 		CGUIAnimationProvider* m_guiAnim = nullptr;
-		//BBS::CModelObject* m_model = nullptr;
+		BBS::CBBSAnimSet* m_anims = nullptr;
+		AnimType currAnim;
 
 		bool drawSkel = false;
 
@@ -85,5 +93,6 @@ namespace BBSMesh
 		void GUI_Modals();
 
 		void DrawSkeleton();
+		void SetAnimType(AnimType type);
 	};
 }

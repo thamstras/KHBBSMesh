@@ -121,7 +121,12 @@ void CSkelMesh::Draw(RenderContext& context, const glm::vec3& position, const gl
 	shader->setMat4("view"s, context.render.viewMatrix);	
 	shader->setMat4("projection"s, context.render.projectionMatrix);
 
-	const int MAX_BONE = 255;
+	// TODO: This is less than the 255 bones a bbs model could theoretically have.
+	//	     However a mat4[255] uniform array blows the entire uniform location budget. (and we need space for view, projection + model)
+	//       If anyone does find a model with > 200 bones we might need to switch to uploading
+	//       just the bones that section uses, which would be a *massive* PITA.
+	// TODO: Uniform Buffer Object?
+	const int MAX_BONE = 200;
 	if (driver != nullptr)
 	{
 		//REMEMBER the array you get back from the driver might be smaller than MAX_BONE

@@ -127,7 +127,56 @@ void CShader::setMat4(const std::string &name, const glm::mat4 &mat) const
 
 void CShader::checkCompileErrors(unsigned int shader, std::string type)
 {
+	bool isProgram = (type == "PROGRAM");
+	std::string info_type;
+	if (isProgram)
+		info_type = "PROGRAM_LINKING_";
+	else
+		info_type = "SHADER_COMPILATION";
+	
 	int success;
+	if (isProgram)
+		glGetProgramiv(shader, GL_LINK_STATUS, &success);
+	else
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+	bool shouldPrint = false;
+	std::string state = "INFO";
+
+#ifdef DEBUG
+	shouldPrint = true;
+#endif // DEBUG
+
+	if (!success)
+	{
+		shouldPrint = true;
+		state = "ERROR";
+	}
+
+	if (shouldPrint)
+	{
+		int len;
+		if (isProgram)
+			glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &len);
+		else
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+		if (len > 0)
+		{
+			char* info = new char[len];
+			if (info != nullptr)
+			{
+				if (isProgram)
+					glGetProgramInfoLog(shader, len, NULL, info);
+				else
+					glGetShaderInfoLog(shader, len, NULL, info);
+				std::cout << state << "::" << info_type << state << " in " << type << std::endl << info << std::endl << "-- --------------------------------------------------- --" << std::endl;
+				delete[] info;
+			}
+		}
+	}
+
+
+	/*int success;
 	char infoLog[1024];
 	if (type != "PROGRAM")
 	{
@@ -146,5 +195,5 @@ void CShader::checkCompileErrors(unsigned int shader, std::string type)
 			glGetProgramInfoLog(shader, 1024, NULL, infoLog);
 			std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
 		}
-	}
+	}*/
 }

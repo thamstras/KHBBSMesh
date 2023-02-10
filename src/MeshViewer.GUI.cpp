@@ -13,6 +13,8 @@ void MeshViewer::ProcessGUI()
 
 void MeshViewer::GUI_MenuBar()
 {
+	bool openAbout = false;
+
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -21,35 +23,36 @@ void MeshViewer::GUI_MenuBar()
 			{
 				if (ImGui::MenuItem("Model", "Ctrl+O"))
 				{
-					m_modalMessage = std::string("Loading...");
+					//m_modalMessage = std::string("Loading...");
 					//ImGui::OpenPopup("MessageModal");
 					ScheduleDelayedProcess(&MeshViewer::OpenModelFile);
 					//ScheduleDelayedProcess(&MeshViewer::HideMessageModal);
 				}
 
-				if (ImGui::MenuItem("Anim", "Ctrl+A", nullptr, false))
+				if (ImGui::MenuItem("Anim", "Ctrl+A"))
 				{
-					//ScheduleDelayedProcess(&MeshViewer::OpenAnimFile);
+					ScheduleDelayedProcess(&MeshViewer::OpenAnimFile);
 				}
 
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Export..."))
+			/*if (ImGui::BeginMenu("Export..."))
 			{
 				// TODO: Export
 				ImGui::MenuItem("Model", nullptr, nullptr, false);
 				ImGui::MenuItem("Anim", nullptr, nullptr, false);
 
 				ImGui::EndMenu();
-			}
+			}*/
 
 			if (ImGui::BeginMenu("Close..."))
 			{
-				// TODO: Close
-				ImGui::MenuItem("Model", nullptr, nullptr, false);
-				ImGui::MenuItem("Anim", nullptr, nullptr, false);
-
+				if (ImGui::MenuItem("Model", nullptr))
+					ScheduleDelayedProcess(&MeshViewer::CloseModelFile);
+				if (ImGui::MenuItem("Anim", nullptr))
+					ScheduleDelayedProcess(&MeshViewer::CloseAnimFile);
+					
 				ImGui::EndMenu();
 			}
 
@@ -67,7 +70,7 @@ void MeshViewer::GUI_MenuBar()
 		{
 			if (ImGui::MenuItem("About"))
 			{
-				// TODO:
+				openAbout = true;
 			}
 
 			ImGui::EndMenu();
@@ -75,6 +78,8 @@ void MeshViewer::GUI_MenuBar()
 
 		ImGui::EndMainMenuBar();
 	}
+
+	if (openAbout) ImGui::OpenPopup("AboutWindow");
 }
 
 void MeshViewer::GUI_SideBar()
@@ -84,10 +89,29 @@ void MeshViewer::GUI_SideBar()
 		ImGui::Checkbox("Draw Skeleton", &this->drawSkel);
 		ImGui::Separator();
 
-		if (m_guiAnim != nullptr)
-			m_guiAnim->GUI_DrawControls();
+		if (ImGui::BeginCombo("Anim Mode", "Manual"))
+		{
+			if (ImGui::Selectable("Manual", currAnim == AnimType::GuiAnim))
+				SetAnimType(AnimType::GuiAnim);
+			if (ImGui::Selectable("Anim File", currAnim == AnimType::FileAnim))
+				SetAnimType(AnimType::FileAnim);
+			ImGui::EndCombo();
+		}
+
+		if (currAnim == AnimType::GuiAnim)
+		{
+			if (m_guiAnim != nullptr)
+				m_guiAnim->GUI_DrawControls();
+			else
+				ImGui::Text("Nothing loaded.");
+		}
 		else
-			ImGui::Text("Nothing loaded.");
+		{
+			if (m_anims != nullptr)
+				m_anims->GUI_DrawControls();
+			else
+				ImGui::Text("Nothing loaded.");
+		}
 	}
 	ImGui::End();
 }
@@ -97,6 +121,19 @@ void MeshViewer::GUI_Modals()
 	if (ImGui::BeginPopupModal("MessageModal"))
 	{
 		ImGui::Text(m_modalMessage.c_str());
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::IsPopupOpen("AboutWindow"))
+	{
+		auto wind = ImGui::GetWindowSize();
+		ImGui::SetNextWindowPos(ImVec2(0.5f * wind.x, 0.5f * wind.y), ImGuiCond_Appearing);
+	}
+	if (ImGui::BeginPopup("AboutWindow"))
+	{
+		ImGui::Text("KH BBS Mesh");
+		ImGui::TextDisabled("By Thamstras");
+		ImGui::TextDisabled("Special Thanks: Revel8ion, Akderebur");
 		ImGui::EndPopup();
 	}
 }

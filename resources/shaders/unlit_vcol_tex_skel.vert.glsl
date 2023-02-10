@@ -1,7 +1,7 @@
 #version 330
 
 const int MAX_BONE_INFLUENCE = 8;
-const int MAX_BONES = 255;
+const int MAX_BONES = 200;
 
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 color;

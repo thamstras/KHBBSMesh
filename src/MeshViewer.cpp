@@ -198,9 +198,11 @@ bool MeshViewer::Init()
 		std::cout << "[GS] Max anisotropic samples: " << max_anis << std::endl;
 	}
 
-	glViewport(0, 0, m_settings.WIND_WIDTH, m_settings.WIND_HEIGHT);
-	m_window.width = m_settings.WIND_WIDTH;
-	m_window.height = m_settings.WIND_HEIGHT;
+	// The window might not be the size we asked for.
+	glfwGetFramebufferSize(m_window.window, &m_window.width, &m_window.height);
+	glViewport(0, 0, m_window.width, m_window.height);
+	//m_window.width = m_settings.WIND_WIDTH;
+	//m_window.height = m_settings.WIND_HEIGHT;
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
@@ -261,6 +263,7 @@ void MeshViewer::OnFramebufferSizeChanged(GLFWwindow* window, int width, int hei
 {
 	m_window.height = height;
 	m_window.width = width;
+	glViewport(0, 0, width, height);	// TODO: This should be in frame start or something
 }
 
 void MeshViewer::mouse_callback(GLFWwindow* window, double xpos, double ypos)
@@ -350,6 +353,16 @@ void MeshViewer::ProcessInput(GLFWwindow* window, float deltaTime, double worldT
 			m_currentCamera->MovementMultiplier = 2.0f;
 		else
 			m_currentCamera->MovementMultiplier = 1.0f;
+
+		// Ctrl + O -> Open Model
+		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
+			&& glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+			ScheduleDelayedProcess(&MeshViewer::OpenModelFile);
+
+		// Ctrl + A -> Open Anim
+		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
+			&& glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			ScheduleDelayedProcess(&MeshViewer::OpenAnimFile);
 	}
 
 	if (glfwWindowShouldClose(m_window.window))
@@ -365,6 +378,7 @@ void MeshViewer::Update(float deltaTime, double worldTime)
 	}
 
 	if (m_guiAnim != nullptr) m_guiAnim->Update(deltaTime, worldTime);
+	if (m_anims != nullptr) m_anims->Update(deltaTime, worldTime);
 
 	// TODO: I think CSkelModelObject would benifit from an Update function
 	if (m_model != nullptr)
@@ -412,5 +426,24 @@ void MeshViewer::DrawSkeleton()
 			auto parentPos = glm::vec3(pose[bone.parentIdx].transform[3]);
 			DebugDraw::DebugLine(*m_rootRenderContext, parentPos, bonePos, glm::vec3(1.0f, 0.0f, 0.0f));
 		}
+	}
+}
+
+void MeshViewer::SetAnimType(AnimType type)
+{
+	if (m_model == nullptr) return;
+	if (type == AnimType::FileAnim && m_anims == nullptr) return;
+
+	currAnim = type;
+	switch (type)
+	{
+	case BBSMesh::MeshViewer::AnimType::GuiAnim:
+		m_model->animDriver->SetAnimation(m_guiAnim);
+		break;
+	case BBSMesh::MeshViewer::AnimType::FileAnim:
+		m_model->animDriver->SetAnimation(m_anims);
+		break;
+	default:
+		break;
 	}
 }

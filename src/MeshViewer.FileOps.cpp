@@ -1,5 +1,6 @@
 #include "MeshViewer.h"
 #include "FileTypes/BbsPmo.h"
+#include "FileTypes/BbsPam.h"
 
 #include "BBS/CTextureInfo.h"
 #include "BBS/CTextureObject.h"
@@ -55,11 +56,12 @@ void MeshViewer::OpenModelFile()
 	m_guiAnim = new CGUIAnimationProvider(*m_model->skel);
 	m_model->SetAnimDriver(new CAnimationDriver(*m_model->skel));
 	m_model->animDriver->SetAnimation(m_guiAnim);
+	SetAnimType(AnimType::GuiAnim);
 }
 
 void MeshViewer::CloseModelFile()
 {
-	// if (animLoaded) CloseAnimFile();
+	if (m_anims != nullptr) CloseAnimFile();
 
 	if (m_model != nullptr) delete m_model;
 	m_model = nullptr;
@@ -67,4 +69,38 @@ void MeshViewer::CloseModelFile()
 	m_textures.clear();
 	m_rootRenderContext->render.textureLibrary->PruneTextures();
 	if (m_guiAnim) delete m_guiAnim;
+}
+
+void MeshViewer::OpenAnimFile()
+{
+	if (m_model == nullptr)
+		return;
+	
+	std::string path;
+	if (!m_fileManager->OpenFileWindow(path))
+		return;
+
+	std::ifstream fs = std::ifstream(path, std::ifstream::binary);
+	if (!fs.is_open())
+	{
+		// TODO: ShowError("Failed to open file");
+		return;
+	}
+
+	PamFile file = PamFile::ReadPamFile(fs, 0);
+
+
+	// TODO: CHECK SKELETON
+
+	if (m_anims != nullptr) CloseAnimFile();
+	m_anims = new BBS::CBBSAnimSet(file, *m_model->skel);
+	SetAnimType(AnimType::FileAnim);
+}
+
+void MeshViewer::CloseAnimFile()
+{
+	if (currAnim == AnimType::FileAnim) SetAnimType(AnimType::GuiAnim);
+
+	if (m_anims != nullptr) delete m_anims;
+	m_anims = nullptr;
 }
