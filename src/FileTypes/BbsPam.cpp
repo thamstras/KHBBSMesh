@@ -35,7 +35,8 @@ PamAnimChannel ParsePamAnimChannel(std::ifstream& file, uint16_t frameCount)
 		channel.keyframeCount = (uint16_t)ReadStream<uint8_t>(file);
 	else
 		channel.keyframeCount = ReadStream<uint16_t>(file);
-	if (channel.keyframeCount == frameCount)
+	// Degenerate condition; If frameCount == 1 && keyframeCount == 1 we would read a value here we shouldn't.
+	if (channel.keyframeCount == frameCount && frameCount > 1)
 	{
 		for (int k = 0; k < frameCount; k++)
 		{
