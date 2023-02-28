@@ -24,7 +24,22 @@ void CFileManager::ShowInitFailMessageBox()
 	MessageBox(NULL, TEXT("FATAL ERROR: Failed to find resources path\nPlease check working directory."), TEXT("FATAL ERORR"), MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
-bool CFileManager::OpenFileWindow(std::string& out_path)
+LPCTSTR GetFileTypeFilter(EFileOpenType type)
+{
+
+	switch (type)
+	{
+	case EFileOpenType::FILE_PMO:
+		return TEXT("PMO Files\0*.pmo\0All Files\0*.*\0\0");
+	case EFileOpenType::FILE_PAM:
+		return TEXT("PAM Files\0*.pam\0All Files\0*.*\0\0");
+	case EFileOpenType::FILE_ANY:
+	default:
+		return TEXT("All Files\0*.*\0\0");
+	}
+}
+
+bool CFileManager::OpenFileWindow(std::string& out_path, EFileOpenType type)
 {
 	fs::path orignalPath = fs::current_path();
 
@@ -35,7 +50,7 @@ bool CFileManager::OpenFileWindow(std::string& out_path)
 	ZeroMemory(&ofn, sizeof(ofn));
 
 	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.lpstrFilter = TEXT("All Files\0*.*\0\0");
+	ofn.lpstrFilter = GetFileTypeFilter(type);
 	ofn.lpstrFile = filename;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.lpstrInitialDir = resourcesDir.c_str();

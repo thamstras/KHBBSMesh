@@ -8,6 +8,13 @@ enum class EResourceType
 	RSRC_TEXTURE
 };
 
+enum class EFileOpenType
+{
+	FILE_PMO,
+	FILE_PAM,
+	FILE_ANY
+};
+
 class CFileManager
 {
 public:
@@ -18,7 +25,7 @@ public:
 	std::string GetResourcePath(EResourceType type, std::string name);
 
 	// TODO: REFACTOR
-	bool OpenFileWindow(std::string& out_path);
+	bool OpenFileWindow(std::string& out_path, EFileOpenType type = EFileOpenType::FILE_ANY);
 	bool OpenDirectoryWindow(std::string& out_path);
 
 private:

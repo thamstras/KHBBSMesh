@@ -10,7 +10,7 @@ using namespace BBSMesh;
 void MeshViewer::OpenModelFile()
 {
 	std::string path;
-	if (!m_fileManager->OpenFileWindow(path))
+	if (!m_fileManager->OpenFileWindow(path, EFileOpenType::FILE_PMO))
 		return;
 
 	std::ifstream fs = std::ifstream(path, std::ifstream::binary);
@@ -77,7 +77,7 @@ void MeshViewer::OpenAnimFile()
 		return;
 	
 	std::string path;
-	if (!m_fileManager->OpenFileWindow(path))
+	if (!m_fileManager->OpenFileWindow(path, EFileOpenType::FILE_PAM))
 		return;
 
 	std::ifstream fs = std::ifstream(path, std::ifstream::binary);
