@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include "Common.h"
-
+#include <locale>
+#include <codecvt>
 #include "CFileManager.h"
 
 #pragma comment(lib, "Comdlg32") // Needed for GetOpenFileName
@@ -22,6 +23,13 @@ std::filesystem::path CFileManager::FindExeDir()
 void CFileManager::ShowInitFailMessageBox()
 {
 	MessageBox(NULL, TEXT("FATAL ERROR: Failed to find resources path\nPlease check working directory."), TEXT("FATAL ERORR"), MB_OK | MB_ICONERROR | MB_TASKMODAL);
+}
+
+void CFileManager::ShowMessageBox(std::string message)
+{
+	// TODO: I'd say UNICODE, but there's so much in this program that needs changing for that to work.
+
+	MessageBoxA(NULL, message.c_str(), "OOPS", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
 LPCTSTR GetFileTypeFilter(EFileOpenType type)

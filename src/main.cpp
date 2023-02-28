@@ -12,6 +12,7 @@ int main(int argc, char** argv)
 	{
 		std::cerr << "FATAL: " << ex.what() << std::endl;
 		// TODO: MessageBox(something)?
+		CFileManager::ShowMessageBox(ex.what());
 		return EXIT_FAILURE;
 	}
 }

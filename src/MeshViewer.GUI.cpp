@@ -89,7 +89,7 @@ void MeshViewer::GUI_SideBar()
 		ImGui::Checkbox("Draw Skeleton", &this->drawSkel);
 		ImGui::Separator();
 
-		if (ImGui::BeginCombo("Anim Mode", "Manual"))
+		if (ImGui::BeginCombo("Anim Mode", currAnim == AnimType::GuiAnim ? "Manual" : "Anim File"))
 		{
 			if (ImGui::Selectable("Manual", currAnim == AnimType::GuiAnim))
 				SetAnimType(AnimType::GuiAnim);

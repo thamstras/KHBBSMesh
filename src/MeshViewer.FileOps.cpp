@@ -16,21 +16,30 @@ void MeshViewer::OpenModelFile()
 	std::ifstream fs = std::ifstream(path, std::ifstream::binary);
 	if (!fs.is_open())
 	{
-		// TODO: ShowError("Failed to open file");
+		CFileManager::ShowMessageBox("Failed to open file!");
 		return;
 	}
 
-	PmoFile newFile = PmoFile::ReadPmoFile(fs, 0);
+	PmoFile newFile;
+	try
+	{
+		newFile = PmoFile::ReadPmoFile(fs, 0);
+	}
+	catch (std::exception ex)
+	{
+		CFileManager::ShowMessageBox(ex.what());
+		return;
+	}
+
 	if (!(newFile.hasMesh0() || newFile.hasMesh1()))
 	{
-		// TODO: ShowError("Error reading file");
+		CFileManager::ShowMessageBox("Error reading file");
 		return;
 	}
 
 	if (m_model != nullptr) CloseModelFile();
 
 	m_model = new BBS::CSkelModelObject();
-	//m_model = new BBS::CModelObject();
 	m_model->LoadPmo(newFile, false);
 
 	auto texMap = std::unordered_map<std::string, BBS::CTextureInfo*>();
@@ -83,12 +92,20 @@ void MeshViewer::OpenAnimFile()
 	std::ifstream fs = std::ifstream(path, std::ifstream::binary);
 	if (!fs.is_open())
 	{
-		// TODO: ShowError("Failed to open file");
+		CFileManager::ShowMessageBox("Failed to open file!");
 		return;
 	}
 
-	PamFile file = PamFile::ReadPamFile(fs, 0);
-
+	PamFile file;
+	try
+	{
+		file = PamFile::ReadPamFile(fs, 0);
+	}
+	catch (std::exception ex)
+	{
+		CFileManager::ShowMessageBox(ex.what());
+		return;
+	}
 
 	// TODO: CHECK SKELETON
 

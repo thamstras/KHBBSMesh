@@ -18,6 +18,8 @@ enum class EFileOpenType
 class CFileManager
 {
 public:
+	static void ShowMessageBox(std::string message);
+
 	CFileManager();
 	CFileManager(std::string rootDirOverride);
 	~CFileManager();
