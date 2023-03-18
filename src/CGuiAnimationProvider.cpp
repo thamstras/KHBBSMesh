@@ -1,25 +1,6 @@
 #include "CGuiAnimationProvider.h"
 #include "glm/gtc/type_ptr.hpp"
 
-Transform::Transform()
-	: position(0.0f), rotation(0.0f), scale(1.0f)
-{}
-
-Transform::Transform(glm::vec3 p, glm::vec3 r, glm::vec3 s)
-	: position(p), rotation(r), scale(s)
-{}
-
-glm::mat4 Transform::GetTransform()
-{
-	glm::quat q = glm::quat(rotation);
-	glm::mat4 t = glm::mat4(1.0f);
-	t = glm::translate(t, position);
-	t = glm::rotate(t, glm::angle(q), glm::axis(q));
-	t = glm::scale(t, scale);
-	return t;
-}
-
-// TODO: Transform::SetTransform(glm::mat4 t)
 
 CGUIAnimationProvider::CGUIAnimationProvider(CSkeleton skel)
 	: skeleton(skel)
@@ -58,6 +39,11 @@ void CGUIAnimationProvider::SetPlayRate(float rate)
 void CGUIAnimationProvider::SetPlaying(bool isPlaying)
 {
 	// NOP
+}
+
+bool CGUIAnimationProvider::NeedsScaleHack()
+{
+	return false;
 }
 
 void CGUIAnimationProvider::GUI_DrawControls()

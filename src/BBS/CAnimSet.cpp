@@ -1,6 +1,7 @@
 #include "CAnimSet.h"
 #include <cmath>
 #include <format>
+#include "Core/Transform.h"
 
 using namespace BBS;
 
@@ -203,7 +204,9 @@ CBBSAnimSet::~CBBSAnimSet() {}
 
 int CBBSAnimSet::BoneCount()
 {
-	// TODO: DEPENDS ON SELECTED ANIM?
+	AnimInfo& currAnim = animInfos[selectedIdx];
+	if (currAnim.idx != -1)
+		return anims[currAnim.idx].boneCount;
 	return 0;
 }
 
@@ -244,6 +247,11 @@ void CBBSAnimSet::SetPlayRate(float rate)
 void CBBSAnimSet::SetPlaying(bool isPlaying)
 {
 	this->isPlaying = isPlaying;
+}
+
+bool CBBSAnimSet::NeedsScaleHack()
+{
+	return true;
 }
 
 int CBBSAnimSet::AnimCount()
@@ -300,5 +308,33 @@ void CBBSAnimSet::GUI_DrawControls()
 		ImGui::Text("Loop To %d", anim.loopTo);
 		ImGui::Text("Bone Count %d", anim.boneCount);
 		ImGui::Checkbox("Loop?", &anim.shouldLoop);
+		ImGui::Separator();
+		if (ImGui::Button("Prev Frame"))
+		{
+			SetAnimTime((anim.currFrame - 1) / (float)anim.frameRate);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Next Frame"))
+		{
+			SetAnimTime((anim.currFrame + 1) / (float)anim.frameRate);
+		}
+		ImGui::Checkbox("Show Pose?", &gui_showPose);
+		if (gui_showPose)
+		{
+			ImGui::Separator();
+			int bcount = BoneCount();
+			for (int i = 0; i < bcount; i++)
+			{
+				CBone& bone = skeleton.bones[i];
+				Transform t = Transform::Decompose(GetBone(i));
+				ImGui::PushID(i);
+				ImGui::Text("Bone: %s", bone.name.c_str());
+				ImGui::DragFloat3("Position", glm::value_ptr(t.position), 0.1f);
+				ImGui::DragFloat3("Rotation", glm::value_ptr(t.rotation), 0.1f, -180.0f, 180.0f);
+				ImGui::DragFloat3("Scale", glm::value_ptr(t.scale), 0.1f);
+				ImGui::Separator();
+				ImGui::PopID();
+			}
+		}
 	}
 }

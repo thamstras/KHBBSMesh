@@ -108,6 +108,7 @@ namespace BBS
 		virtual void SetAnimTime(float time) override;
 		virtual void SetPlayRate(float rate) override;
 		virtual void SetPlaying(bool isPlaying) override;
+		virtual bool NeedsScaleHack() override;
 
 		int AnimCount();
 		void SelectAnim(int idx);
@@ -123,5 +124,6 @@ namespace BBS
 		std::vector<CBBSAnim> anims;
 		std::vector<AnimInfo> animInfos;
 		CSkeleton skeleton;
+		bool gui_showPose = false;
 	};
 }

@@ -52,6 +52,18 @@ void CAnimationDriver::Update(float deltaTime, double worldTime)
 		// TODO: I'm not convinced by the ordering of these transform multiplications...
 		glm::mat4 frameTransform = m_currentAnim->GetBone(bone.idx);
 		glm::mat4 parentTransform = (bone.parentIdx == -1) ? glm::mat4(1.0f) : m_bones[bone.parentIdx].transform;
+		if (m_currentAnim->NeedsScaleHack())
+		{
+			glm::vec4 scale;
+			for (int i = 0; i < 3; i++) scale[i] = glm::length(glm::vec3(parentTransform[i]));
+			scale[3] = 1.0f;
+			parentTransform = glm::mat4(
+				parentTransform[0] / scale[0],
+				parentTransform[1] / scale[1],
+				parentTransform[2] / scale[2],
+				parentTransform[3] / scale[3]
+			);
+		}
 		glm::mat4 globalTransform = parentTransform * frameTransform;
 		glm::mat4 vertTransform = globalTransform * bone.inverseTransform;
 

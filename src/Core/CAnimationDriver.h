@@ -15,6 +15,7 @@ public:
 	virtual void SetAnimTime(float time) = 0;
 	virtual void SetPlayRate(float rate) = 0;
 	virtual void SetPlaying(bool isPlaying) = 0;
+	virtual bool NeedsScaleHack() = 0;
 };
 
 struct AnimBone
