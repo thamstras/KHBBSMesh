@@ -3,6 +3,8 @@
 #include "Core/CAnimationDriver.h"
 #include "FileTypes/BbsPam.h"
 
+class AssimpAnimExporter;
+
 namespace BBS
 {
 	struct Keyframe
@@ -18,6 +20,10 @@ namespace BBS
 		virtual ~IAnimChannel() = default;
 
 		virtual float Evaluate(int frame) = 0;
+		virtual int KeyframeCount() = 0;
+		virtual Keyframe GetKeyframe(int keyframeIdx) = 0;
+
+		friend class ::AssimpAnimExporter;
 	};
 
 	class CConstChannel : public IAnimChannel
@@ -27,8 +33,13 @@ namespace BBS
 		virtual ~CConstChannel() = default;
 
 		virtual float Evaluate(int frame) override;
+		virtual int KeyframeCount() override;
+		virtual Keyframe GetKeyframe(int keyframeIdx) override;
+
 	private:
 		float theValue;
+
+		friend class ::AssimpAnimExporter;
 	};
 
 	class CKeyframeChannel : public IAnimChannel
@@ -38,9 +49,13 @@ namespace BBS
 		virtual ~CKeyframeChannel() = default;
 
 		virtual float Evaluate(int frame) override;
+		virtual int KeyframeCount() override;
+		virtual Keyframe GetKeyframe(int keyframeIdx) override;
 	private:
 		std::vector<Keyframe> keyframes;
 		int FindPrevKey(int frame);
+
+		friend class ::AssimpAnimExporter;
 	};
 
 	class CBoneAnim
@@ -59,6 +74,8 @@ namespace BBS
 		std::unique_ptr<IAnimChannel> sx, sy, sz;
 
 		std::unique_ptr<IAnimChannel> MakeChannel(std::optional<PamAnimChannel>& channel, float defaultValue = 0.0f);
+
+		friend class ::AssimpAnimExporter;
 	};
 
 	class CBBSAnim
@@ -83,6 +100,7 @@ namespace BBS
 		std::vector<CBoneAnim> bones;
 
 		friend class CBBSAnimSet;
+		friend class ::AssimpAnimExporter;
 	};
 
 	/* NOTE: In an actual engine AnimSet would just be storage and we'd plug the anims straight into 
@@ -125,5 +143,7 @@ namespace BBS
 		std::vector<AnimInfo> animInfos;
 		CSkeleton skeleton;
 		bool gui_showPose = false;
+
+		friend class ::AssimpAnimExporter;
 	};
 }

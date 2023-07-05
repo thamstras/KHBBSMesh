@@ -9,11 +9,14 @@ void MeshViewer::ProcessGUI()
 	GUI_SideBar();
 
 	GUI_Modals();
+
+	GUI_ExportOptions();
 }
 
 void MeshViewer::GUI_MenuBar()
 {
 	bool openAbout = false;
+	bool openExport = false;
 
 	if (ImGui::BeginMainMenuBar())
 	{
@@ -45,6 +48,10 @@ void MeshViewer::GUI_MenuBar()
 
 				ImGui::EndMenu();
 			}*/
+			if (ImGui::MenuItem("Export", nullptr))
+			{
+				openExport = true;
+			}
 
 			if (ImGui::BeginMenu("Close..."))
 			{
@@ -80,6 +87,7 @@ void MeshViewer::GUI_MenuBar()
 	}
 
 	if (openAbout) ImGui::OpenPopup("AboutWindow");
+	if (openExport) ImGui::OpenPopup("ExportModal");
 }
 
 void MeshViewer::GUI_SideBar()
@@ -146,4 +154,58 @@ void MeshViewer::HideMessageModal()
 		ImGui::CloseCurrentPopup();
 		ImGui::EndPopup();
 	}*/
+}
+
+void MeshViewer::GUI_ExportOptions()
+{
+	if (ImGui::BeginPopupModal("ExportModal"))
+	{
+		if (!gotFormats)
+		{
+			exportFormats = GetExportOptions();
+			gotFormats = true;
+			for (auto& format : exportFormats)
+			{
+				if (format.id == "fbx")
+				{
+					currFormat = format;
+					break;
+				}
+			}
+		}
+
+		ImGui::Text("Export Options");
+
+		ImGui::Separator();
+
+		ImGui::InputText("Folder", pathBuf, 260);
+		ImGui::Text("Will append model name to path");
+
+		ImGui::Separator();
+
+		if (ImGui::BeginCombo("Format", currFormat->id.c_str()))
+		{
+			for (auto& format : exportFormats)
+			{
+				if (ImGui::Selectable(format.desc.c_str(), currFormat->id == format.id))
+					currFormat = format;
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Export"))
+		{
+			ImGui::CloseCurrentPopup();
+			ExportAnimFile();
+		}
+
+		ImGui::EndPopup();
+	}
 }

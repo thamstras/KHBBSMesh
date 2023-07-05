@@ -4,6 +4,7 @@
 
 #include "BBS/CTextureInfo.h"
 #include "BBS/CTextureObject.h"
+#include "AssimpExporter.h"
 
 using namespace BBSMesh;
 
@@ -66,6 +67,8 @@ void MeshViewer::OpenModelFile()
 	m_model->SetAnimDriver(new CAnimationDriver(*m_model->skel));
 	m_model->animDriver->SetAnimation(m_guiAnim);
 	SetAnimType(AnimType::GuiAnim);
+
+	modelName = std::filesystem::path(path).stem().string();
 }
 
 void MeshViewer::CloseModelFile()
@@ -120,4 +123,9 @@ void MeshViewer::CloseAnimFile()
 
 	if (m_anims != nullptr) delete m_anims;
 	m_anims = nullptr;
+}
+
+void MeshViewer::ExportAnimFile()
+{
+	AssimpAnimExporter::ExportSkelScene(m_model, m_anims, modelName, std::string(pathBuf), *currFormat);
 }

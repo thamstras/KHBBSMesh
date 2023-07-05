@@ -9,6 +9,7 @@
 #include "BBS/CSkelModelObject.h"
 #include "CGuiAnimationProvider.h"
 #include "BBS/CAnimSet.h"
+#include <AssimpInterface.h>
 
 namespace BBSMesh
 {
@@ -71,6 +72,12 @@ namespace BBSMesh
 
 		bool drawSkel = false;
 
+		std::string modelName;
+		std::vector<ExportFormat> exportFormats;
+		bool gotFormats = false;
+		std::optional<ExportFormat> currFormat;
+		char pathBuf[260] = ".\\resources\\export";
+
 		bool Init();
 
 		void ProcessGUI();
@@ -91,6 +98,7 @@ namespace BBSMesh
 		void GUI_MenuBar();
 		void GUI_SideBar();
 		void GUI_Modals();
+		void GUI_ExportOptions();
 
 		void DrawSkeleton();
 		void SetAnimType(AnimType type);

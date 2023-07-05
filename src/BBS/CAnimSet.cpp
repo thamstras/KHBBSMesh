@@ -20,6 +20,16 @@ float CConstChannel::Evaluate(int frame)
 	return theValue;
 }
 
+int CConstChannel::KeyframeCount() { return 1; }
+
+Keyframe CConstChannel::GetKeyframe(int keyframeidx)
+{
+	Keyframe keyframe = Keyframe();
+	keyframe.frameNumber = 0;
+	keyframe.value = theValue;
+	return keyframe;
+}
+
 CKeyframeChannel::CKeyframeChannel(std::vector<Keyframe> frames)
 {
 	this->keyframes = frames;
@@ -52,6 +62,16 @@ int CKeyframeChannel::FindPrevKey(int frame)
 		}
 	}
 	return 0;
+}
+
+int CKeyframeChannel::KeyframeCount()
+{
+	return keyframes.size();
+}
+
+Keyframe CKeyframeChannel::GetKeyframe(int keyframeIdx)
+{
+	return keyframes[keyframeIdx];
 }
 
 CBoneAnim::CBoneAnim(PamBoneAnim& pamBone)
