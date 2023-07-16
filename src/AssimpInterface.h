@@ -6,22 +6,12 @@
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
 
-class aiSceneWrapper
+class aiFaceWrapper
 {
 public:
-	aiSceneWrapper();
-	~aiSceneWrapper();
+	unsigned int mIndices[3] = { 0 };
 
-	std::vector<aiMesh*> mMeshes;
-	std::vector<aiMaterial*> mMaterials;
-
-	aiNode* mRootNode;
-	std::vector<aiNode*> mAllNodes;
-
-	std::vector<aiAnimation*> mAnimations;
-
-	aiScene* Finish();
-	void AddNodeToRoot(aiNode* node);
+	aiFace Finish();
 };
 
 class aiBoneWrapper
@@ -49,6 +39,67 @@ public:
 	unsigned int mMaterialIndex;
 
 	aiMesh* Finish();
+};
+
+class aiNodeAnimWrapper
+{
+public:
+	aiNodeAnimWrapper();
+
+	std::string mNodeName;
+	std::vector<aiVectorKey> mPositionKeys;
+	std::vector<aiQuatKey> mRotationKeys;
+	std::vector<aiVectorKey> mScalingKeys;
+	aiAnimBehaviour mPreState;
+	aiAnimBehaviour mPostState;
+
+	aiNodeAnim* Finish();
+};
+
+class aiNodeWrapper
+{
+public:
+	aiNodeWrapper();
+
+	std::string mName;
+	glm::mat4 mTransformation;
+	aiNodeWrapper* mParent;
+	std::vector<aiNodeWrapper> mChildren;
+	std::vector<unsigned int> mMeshes;
+
+	void AddChild(aiNodeWrapper node);
+	aiNode* FinishTree(aiNode* parent = nullptr);
+};
+
+class aiAnimationWrapper
+{
+public:
+	aiAnimationWrapper();
+
+	std::string mName;
+	double mDuration;
+	double mTicksPerSecond;
+	std::vector<aiNodeAnimWrapper> mChannels;
+
+	aiAnimation* Finish();
+};
+
+class aiSceneWrapper
+{
+public:
+	aiSceneWrapper();
+	~aiSceneWrapper();
+
+	std::vector<aiMesh*> mMeshes;
+	std::vector<aiMaterial*> mMaterials;
+
+	aiNode* mRootNode;
+	std::vector<aiNode*> mAllNodes;
+
+	std::vector<aiAnimation*> mAnimations;
+
+	aiScene* Finish();
+	void AddNodeToRoot(aiNode* node);
 };
 
 class AssimpExporter

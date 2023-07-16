@@ -82,24 +82,41 @@ aiMesh* aiMeshWrapper::Finish()
 	mesh->mPrimitiveTypes = aiPrimitiveType_TRIANGLE;
 	mesh->mMaterialIndex = mMaterialIndex;
 
-	mesh->mNumVertices = mVertices.size();
-	mesh->mVertices = new aiVector3D[mesh->mNumVertices];
-	for (int i = 0; i < mesh->mNumVertices; i++) { mesh->mVertices[i] = mVertices[i]; }
+	assert(mColors.size() == mVertices.size() || mColors.size() == 0);
+	assert(mTextureCoords.size() == mVertices.size() || mTextureCoords.size() == 0);
+	
+	if (mVertices.size() > 0)
+	{
+		assert(mFaces.size() > 0);
 
-	mesh->mNumFaces = mFaces.size();
-	mesh->mFaces = new aiFace[mesh->mNumFaces];
-	for (int i = 0; i < mesh->mNumFaces; i++) { mesh->mFaces[i] = mFaces[i]; }
+		mesh->mNumVertices = mVertices.size();
+		mesh->mVertices = new aiVector3D[mVertices.size()];
+		std::copy(mVertices.begin(), mVertices.end(), mesh->mVertices);
 
-	mesh->mColors[0] = new aiColor4D[mesh->mNumVertices];
-	for (int i = 0; i < mesh->mNumVertices; i++) { mesh->mColors[0][i] = mColors[i]; }
+		mesh->mNumFaces = mFaces.size();
+		mesh->mFaces = new aiFace[mFaces.size()];
+		std::copy(mFaces.begin(), mFaces.end(), mesh->mFaces);
 
-	mesh->mNumUVComponents[0] = 2;
-	mesh->mTextureCoords[0] = new aiVector3D[mesh->mNumVertices];
-	for (int i = 0; i < mesh->mNumVertices; i++) { mesh->mTextureCoords[0][i] = mTextureCoords[i]; }
+		if (mColors.size() > 0)
+		{
+			mesh->mColors[0] = new aiColor4D[mVertices.size()];
+			std::copy(mColors.begin(), mColors.end(), mesh->mColors[0]);
+		}
 
-	mesh->mNumBones = mBones.size();
-	mesh->mBones = new aiBone*[mesh->mNumBones];
-	for (int i = 0; i < mesh->mNumBones; i++) { mesh->mBones[i] = mBones[i].Finish(); }
+		if (mTextureCoords.size() > 0)
+		{
+			mesh->mNumUVComponents[0] = 2;
+			mesh->mTextureCoords[0] = new aiVector3D[mVertices.size()];
+			std::copy(mTextureCoords.begin(), mTextureCoords.end(), mesh->mTextureCoords[0]);
+		}
+	}
+
+	if (mBones.size() > 0)
+	{
+		mesh->mNumBones = mBones.size();
+		mesh->mBones = new aiBone * [mBones.size()];
+		std::copy(mBones.begin(), mBones.end(), mesh->mBones);
+	}
 
 	return mesh;
 }
@@ -115,9 +132,12 @@ aiBone* aiBoneWrapper::Finish()
 	aiBone* bone = new aiBone();
 	bone->mName = aiString(mName);
 	bone->mOffsetMatrix = Glm2Assimp::Matrix4(mOffsetMatrix);
-	bone->mNumWeights = mWeights.size();
-	bone->mWeights = new aiVertexWeight[bone->mNumWeights];
-	for (int i = 0; i < bone->mNumWeights; i++) bone->mWeights[i] = mWeights[i];
+	if (mWeights.size() > 0)
+	{
+		bone->mNumWeights = mWeights.size();
+		bone->mWeights = new aiVertexWeight[mWeights.size()];
+		std::copy(mWeights.begin(), mWeights.end(), bone->mWeights);
+	}
 	return bone;
 }
 
@@ -381,4 +401,88 @@ std::vector<ExportFormat> GetExportOptions()
 	}
 
 	return formats;
+}
+
+aiFace aiFaceWrapper::Finish()
+{
+	aiFace face = aiFace();
+	face.mNumIndices = 3;
+	face.mIndices = new unsigned int[3];
+	std::copy(this->mIndices, this->mIndices + 4, face.mIndices);
+	return face;
+}
+
+aiBoneWrapper::aiBoneWrapper()
+	: mName(), mWeights(), mOffsetMatrix(1.0f)
+{
+
+}
+
+aiBone* aiBoneWrapper::Finish()
+{
+	aiBone* bone = new aiBone;
+	bone->mName = aiString(mName);
+	bone->mNumWeights = mWeights.size();
+	bone->mWeights = new aiVertexWeight[mWeights.size()];
+	std::copy(mWeights.begin(), mWeights.end(), bone->mWeights);
+	bone->mOffsetMatrix = Glm2Assimp::Matrix4(mOffsetMatrix);
+	return bone;
+}
+
+aiNodeAnimWrapper::aiNodeAnimWrapper()
+	: mNodeName(), mPositionKeys(), mRotationKeys(), mScalingKeys(), mPreState(aiAnimBehaviour_CONSTANT), mPostState(aiAnimBehaviour_CONSTANT)
+{
+
+}
+
+aiNodeAnim* aiNodeAnimWrapper::Finish()
+{
+	aiNodeAnim* anim = new aiNodeAnim();
+	anim->mNodeName = aiString(mNodeName);
+	anim->mNumPositionKeys = mPositionKeys.size();
+	anim->mPositionKeys = new aiVectorKey[mPositionKeys.size()];
+	std::copy(mPositionKeys.begin(), mPositionKeys.end(), anim->mPositionKeys);
+	anim->mNumRotationKeys = mRotationKeys.size();
+	anim->mRotationKeys = new aiQuatKey[mRotationKeys.size()];
+	std::copy(mRotationKeys.begin(), mRotationKeys.end(), anim->mRotationKeys);
+	anim->mNumScalingKeys = mScalingKeys.size();
+	anim->mScalingKeys = new aiVectorKey[mScalingKeys.size()];
+	std::copy(mScalingKeys.begin(), mScalingKeys.end(), anim->mScalingKeys);
+	anim->mPreState = mPreState;
+	anim->mPostState = mPostState;
+	return anim;
+}
+
+aiNodeWrapper::aiNodeWrapper()
+	: mName(), mTransformation(1.0f), mParent(nullptr), mChildren(), mMeshes()
+{
+
+}
+
+void aiNodeWrapper::AddChild(aiNodeWrapper node)
+{
+	node.mParent = this;
+	mChildren.push_back(node);
+}
+
+aiNode* aiNodeWrapper::FinishTree(aiNode* parent)
+{
+	aiNode* node = new aiNode();
+	node->mName = aiString(mName);
+	node->mTransformation = Glm2Assimp::Matrix4(mTransformation);
+	node->mParent = parent;
+	if (mChildren.size() > 0)
+	{
+		node->mNumChildren = mChildren.size();
+		node->mChildren = new aiNode * [mChildren.size()];
+		for (int c = 0; c < mChildren.size(); c++)
+			node->mChildren[c] = mChildren[c].FinishTree(node);
+	}
+	if (mMeshes.size() > 0)
+	{
+		node->mNumMeshes = mMeshes.size();
+		node->mMeshes = new unsigned int[mMeshes.size()];
+		std::copy(mMeshes.begin(), mMeshes.end(), node->mMeshes);
+	}
+	return node;
 }
