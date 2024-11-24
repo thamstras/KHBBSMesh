@@ -161,8 +161,8 @@ bool MeshViewer::Init()
 
 	std::cout << "[GS] Compiled with GLFW " << glfwGetVersionString() << std::endl;
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 	if (m_settings.USE_ANTIALIASING) glfwWindowHint(GLFW_SAMPLES, 4);
@@ -190,11 +190,11 @@ bool MeshViewer::Init()
 		return false;
 	}
 
-	if (GLAD_GL_EXT_texture_filter_anisotropic)
+	if (GLAD_GL_ARB_texture_filter_anisotropic)
 	{
-		std::cout << "[GS] Loaded extention GL_EXT_texture_filter_anisotropic!" << std::endl;
+		std::cout << "[GS] Loaded extention GL_ARB_texture_filter_anisotropic!" << std::endl;
 		float max_anis;
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_anis);
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_anis);
 		std::cout << "[GS] Max anisotropic samples: " << max_anis << std::endl;
 	}
 
