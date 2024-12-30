@@ -102,30 +102,30 @@ public:
 	void AddNodeToRoot(aiNode* node);
 };
 
-class AssimpExporter
-{
-public:
-	AssimpExporter();
-	~AssimpExporter();
-
-	void BeginExport();
-
-	void AddTexture(std::string name, CTexture* texture);
-
-	void AddMesh(CMesh* mesh);
-
-	void EndExport(std::string folderPath, std::string mapname);
-
-private:
-	// Call AddMesh instead
-	unsigned int AddSection(CMeshSection* section, CMesh* parent);
-
-	std::map<std::string, int> textureMap;
-	std::map<int, std::string> textureUnmap;
-	std::vector<CTexture*> textureList;
-
-	aiSceneWrapper* scene;
-};
+//class AssimpExporter
+//{
+//public:
+//	AssimpExporter();
+//	~AssimpExporter();
+//
+//	void BeginExport();
+//
+//	void AddTexture(std::string name, CTexture* texture);
+//
+//	void AddMesh(CMesh* mesh);
+//
+//	void EndExport(std::string folderPath, std::string mapname);
+//
+//private:
+//	// Call AddMesh instead
+//	unsigned int AddSection(CMeshSection* section, CMesh* parent);
+//
+//	std::map<std::string, int> textureMap;
+//	std::map<int, std::string> textureUnmap;
+//	std::vector<CTexture*> textureList;
+//
+//	aiSceneWrapper* scene;
+//};
 
 struct ExportFormat
 {

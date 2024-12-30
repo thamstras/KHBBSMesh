@@ -9,10 +9,10 @@ class AssimpAnimExporter
 {
 public:
 	static aiAnimation* Export(BBS::CBBSAnim& anim, std::string name, CSkeleton& skel);
-	static aiNodeAnim* Export(BBS::CBoneAnim& boneAnim, std::string boneName, BBS::CBBSAnim& parentAnim);
+	static aiNodeAnimWrapper Export(BBS::CBoneAnim& boneAnim, std::string boneName, BBS::CBBSAnim& parentAnim);
 
-	static aiVectorKey* ExportVectorChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount, unsigned int& out_count);
-	static aiQuatKey* ExportQuatChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount, unsigned int& out_count);
+	static std::vector<aiVectorKey> ExportVectorChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount);
+	static std::vector<aiQuatKey> ExportQuatChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount);
 
 	static aiNode* Export(CSkeleton& skeleton);
 	static aiNode* ExportSubTree(CBone& bone, CSkeleton& skeleton, aiNode* parent);

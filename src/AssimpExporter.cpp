@@ -10,112 +10,108 @@
 
 aiAnimation* AssimpAnimExporter::Export(BBS::CBBSAnim& anim, std::string name, CSkeleton& skel)
 {
-	aiAnimation* outAnim = new aiAnimation();
-	outAnim->mName = aiString(name);
-	//outAnim->mDuration = anim.frameCount * (double)anim.frameRate;
-	outAnim->mDuration = anim.frameCount;
-	//outAnim->mTicksPerSecond = anim.frameRate;
-	outAnim->mTicksPerSecond = 0;
-	outAnim->mNumChannels = anim.boneCount;
-	outAnim->mChannels = new aiNodeAnim*[outAnim->mNumChannels];
-	for (int i = 0; i < outAnim->mNumChannels; i++)
+	aiAnimationWrapper outAnim = aiAnimationWrapper();
+	outAnim.mName = name;
+	outAnim.mDuration = anim.frameCount * 24.0f;
+	outAnim.mTicksPerSecond = 24.0f;
+	for (int i = 0; i < anim.boneCount; i++)
 	{
-		outAnim->mChannels[i] = Export(anim.bones[i], skel.bones[i].name, anim);
+		outAnim.mChannels.push_back(Export(anim.bones[i], skel.bones[i].name, anim));
 	}
-	return outAnim;
+	return outAnim.Finish();
 }
 
-aiNodeAnim* AssimpAnimExporter::Export(BBS::CBoneAnim& boneAnim, std::string boneName, BBS::CBBSAnim& parentAnim)
+aiNodeAnimWrapper AssimpAnimExporter::Export(BBS::CBoneAnim& boneAnim, std::string boneName, BBS::CBBSAnim& parentAnim)
 {
 	// info
-	aiNodeAnim* outAnim = new aiNodeAnim();
-	outAnim->mNodeName = aiString(boneName);
-	outAnim->mPreState = aiAnimBehaviour_CONSTANT;
-	outAnim->mPostState = aiAnimBehaviour_CONSTANT;
+	aiNodeAnimWrapper outAnim = aiNodeAnimWrapper();
+	outAnim.mNodeName = boneName;
+	outAnim.mPreState = aiAnimBehaviour_CONSTANT;
+	outAnim.mPostState = aiAnimBehaviour_CONSTANT;
 
 	// Position
 	int kcx, kcy, kcz;
 	kcx = boneAnim.tx->KeyframeCount();
 	kcy = boneAnim.ty->KeyframeCount();
 	kcz = boneAnim.tz->KeyframeCount();
-	outAnim->mNumPositionKeys = std::max(std::max(kcx, kcy), kcz);
-	if (outAnim->mNumPositionKeys == 1)
+	int numPositionKeys = std::max(std::max(kcx, kcy), kcz);
+	if (numPositionKeys == 1)
 	{
 		// all constants
-		outAnim->mPositionKeys = new aiVectorKey[outAnim->mNumPositionKeys];
-		outAnim->mPositionKeys[0] = aiVectorKey(0.0, aiVector3D(boneAnim.tx->Evaluate(0), boneAnim.ty->Evaluate(0), boneAnim.tz->Evaluate(0)));
+		outAnim.mPositionKeys.push_back(aiVectorKey(0.0, aiVector3D(boneAnim.tx->Evaluate(0), boneAnim.ty->Evaluate(0), boneAnim.tz->Evaluate(0))));
+		outAnim.mPositionKeys.push_back(aiVectorKey(parentAnim.frameCount / 24.0f, aiVector3D(boneAnim.tx->Evaluate(0), boneAnim.ty->Evaluate(0), boneAnim.tz->Evaluate(0))));
 	}
-	else if (outAnim->mNumPositionKeys == parentAnim.frameCount)
+	else if (numPositionKeys == parentAnim.frameCount)
 	{
 		// every frame
-		outAnim->mPositionKeys = new aiVectorKey[outAnim->mNumPositionKeys];
-		for (int f = 0; f < outAnim->mNumPositionKeys; f++)
+		for (int f = 0; f < numPositionKeys; f++)
 		{
-			float t = f / (float)parentAnim.frameRate;
-			outAnim->mPositionKeys[f] = aiVectorKey(t, aiVector3D(boneAnim.tx->Evaluate(f), boneAnim.ty->Evaluate(f), boneAnim.tz->Evaluate(f)));
+			float t = f / 24.0f;
+			//float t = (float)f;
+			outAnim.mPositionKeys.push_back(aiVectorKey(t, aiVector3D(boneAnim.tx->Evaluate(f), boneAnim.ty->Evaluate(f), boneAnim.tz->Evaluate(f))));
 		}
 	}
 	else
 	{
-		outAnim->mPositionKeys = ExportVectorChannel(boneAnim.tx.get(), boneAnim.ty.get(), boneAnim.tz.get(), parentAnim.frameRate, parentAnim.frameCount, outAnim->mNumPositionKeys);
+		outAnim.mPositionKeys = ExportVectorChannel(boneAnim.tx.get(), boneAnim.ty.get(), boneAnim.tz.get(), parentAnim.frameRate, parentAnim.frameCount);
 	}
 
 	// Rotation
 	kcx = boneAnim.rx->KeyframeCount();
 	kcy = boneAnim.ry->KeyframeCount();
 	kcz = boneAnim.rz->KeyframeCount();
-	outAnim->mNumRotationKeys = std::max(std::max(kcx, kcy), kcz);
-	if (outAnim->mNumRotationKeys == 1)
+	int numRotationKeys = std::max(std::max(kcx, kcy), kcz);
+	if (numRotationKeys == 1)
 	{
 		// all constants
-		outAnim->mRotationKeys = new aiQuatKey[outAnim->mNumRotationKeys];
-		outAnim->mRotationKeys[0] = aiQuatKey(0.0, aiQuaternion(boneAnim.ry->Evaluate(0), boneAnim.rz->Evaluate(0), boneAnim.rx->Evaluate(0)));
+		outAnim.mRotationKeys.push_back(aiQuatKey(0.0, aiQuaternion(boneAnim.ry->Evaluate(0), boneAnim.rz->Evaluate(0), boneAnim.rx->Evaluate(0))));
+		outAnim.mRotationKeys.push_back(aiQuatKey(parentAnim.frameCount / 24.0f, aiQuaternion(boneAnim.ry->Evaluate(0), boneAnim.rz->Evaluate(0), boneAnim.rx->Evaluate(0))));
 	}
-	else if (outAnim->mNumRotationKeys == parentAnim.frameCount)
+	else if (numRotationKeys == parentAnim.frameCount)
 	{
 		// every frame
-		outAnim->mRotationKeys = new aiQuatKey[outAnim->mNumRotationKeys];
-		for (int f = 0; f < outAnim->mNumRotationKeys; f++)
+		for (int f = 0; f < numRotationKeys; f++)
 		{
-			float t = f / (float)parentAnim.frameRate;
-			outAnim->mRotationKeys[f] = aiQuatKey(t, aiQuaternion(boneAnim.ry->Evaluate(f), boneAnim.rz->Evaluate(f), boneAnim.rx->Evaluate(f)));
+			float t = f / 24.0f;
+			//float t = (float)f;
+			outAnim.mRotationKeys.push_back(aiQuatKey(t, aiQuaternion(boneAnim.ry->Evaluate(f), boneAnim.rz->Evaluate(f), boneAnim.rx->Evaluate(f))));
 		}
 	}
 	else
 	{
-		outAnim->mRotationKeys = ExportQuatChannel(boneAnim.rx.get(), boneAnim.ry.get(), boneAnim.rz.get(), parentAnim.frameRate, parentAnim.frameCount, outAnim->mNumScalingKeys);
+		outAnim.mRotationKeys = ExportQuatChannel(boneAnim.rx.get(), boneAnim.ry.get(), boneAnim.rz.get(), parentAnim.frameRate, parentAnim.frameCount);
 	}
 
 	// Scale
 	kcx = boneAnim.sx->KeyframeCount();
 	kcy = boneAnim.sy->KeyframeCount();
 	kcz = boneAnim.sz->KeyframeCount();
-	outAnim->mNumScalingKeys = std::max(std::max(kcx, kcy), kcz);
-	if (outAnim->mNumScalingKeys == 1)
+	int numScalingKeys = std::max(std::max(kcx, kcy), kcz);
+	if (numScalingKeys == 1)
 	{
 		// all constants
-		outAnim->mScalingKeys = new aiVectorKey[outAnim->mNumScalingKeys];
-		outAnim->mScalingKeys[0] = aiVectorKey(0.0, aiVector3D(boneAnim.sx->Evaluate(0), boneAnim.sy->Evaluate(0), boneAnim.sz->Evaluate(0)));
+		outAnim.mScalingKeys.push_back(aiVectorKey(0.0, aiVector3D(boneAnim.sx->Evaluate(0), boneAnim.sy->Evaluate(0), boneAnim.sz->Evaluate(0))));
+		outAnim.mScalingKeys.push_back(aiVectorKey(parentAnim.frameCount / 24.0f, aiVector3D(boneAnim.sx->Evaluate(0), boneAnim.sy->Evaluate(0), boneAnim.sz->Evaluate(0))));
 	}
-	else if (outAnim->mNumScalingKeys == parentAnim.frameCount)
+	else if (numScalingKeys == parentAnim.frameCount)
 	{
 		// every frame
-		outAnim->mScalingKeys = new aiVectorKey[outAnim->mNumScalingKeys];
-		for (int f = 0; f < outAnim->mNumScalingKeys; f++)
+		for (int f = 0; f < numScalingKeys; f++)
 		{
-			float t = f / (float)parentAnim.frameRate;
-			outAnim->mScalingKeys[f] = aiVectorKey(t, aiVector3D(boneAnim.sx->Evaluate(f), boneAnim.sy->Evaluate(f), boneAnim.sz->Evaluate(f)));
+			float t = f / 24.0f;
+			//float t = (float)f;
+			outAnim.mScalingKeys.push_back(aiVectorKey(t, aiVector3D(boneAnim.sx->Evaluate(f), boneAnim.sy->Evaluate(f), boneAnim.sz->Evaluate(f))));
 		}
 	}
 	else
 	{
-		outAnim->mScalingKeys = ExportVectorChannel(boneAnim.sx.get(), boneAnim.sy.get(), boneAnim.sz.get(), parentAnim.frameRate, parentAnim.frameCount, outAnim->mNumScalingKeys);
+		outAnim.mScalingKeys = ExportVectorChannel(boneAnim.sx.get(), boneAnim.sy.get(), boneAnim.sz.get(), parentAnim.frameRate, parentAnim.frameCount);
 	}
 
 	return outAnim;
 }
 
-aiVectorKey* AssimpAnimExporter::ExportVectorChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount, unsigned int& out_count)
+std::vector<aiVectorKey> AssimpAnimExporter::ExportVectorChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount)
 {
 	// the difficult one. - We know we need at least N keys, and there'll be gaps, but there's no gurantee the gaps in x/y/z line up,
 	// so we might need more, and we'll have to step through the 3 separate channels taking the least remaining key each time.
@@ -158,18 +154,15 @@ aiVectorKey* AssimpAnimExporter::ExportVectorChannel(BBS::IAnimChannel* x, BBS::
 
 		if (currFrame != lastFrame)
 		{
-			keyList.emplace_back(currFrame / (float)frameRate, aiVector3D(x->Evaluate(currFrame), y->Evaluate(currFrame), z->Evaluate(currFrame)));
+			keyList.emplace_back((float)currFrame / 24.0f, aiVector3D(x->Evaluate(currFrame), y->Evaluate(currFrame), z->Evaluate(currFrame)));
 		}
 	}
 	while (currFrame != lastFrame && currFrame < frameCount);
 
-	out_count = keyList.size();
-	aiVectorKey* theList = new aiVectorKey[keyList.size()];
-	memcpy(theList, keyList.data(), keyList.size() * sizeof(aiVectorKey));
-	return theList;
+	return keyList;
 }
 
-aiQuatKey* AssimpAnimExporter::ExportQuatChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount, unsigned int& out_count)
+std::vector<aiQuatKey> AssimpAnimExporter::ExportQuatChannel(BBS::IAnimChannel* x, BBS::IAnimChannel* y, BBS::IAnimChannel* z, int frameRate, int frameCount)
 {
 	// the difficult one. - We know we need at least N keys, and there'll be gaps, but there's no gurantee the gaps in x/y/z line up,
 	// so we might need more, and we'll have to step through the 3 separate channels taking the least remaining key each time.
@@ -212,14 +205,11 @@ aiQuatKey* AssimpAnimExporter::ExportQuatChannel(BBS::IAnimChannel* x, BBS::IAni
 
 		if (currFrame != lastFrame)
 		{
-			keyList.emplace_back(currFrame / (float)frameRate, aiQuaternion(y->Evaluate(currFrame), z->Evaluate(currFrame), x->Evaluate(currFrame)));
+			keyList.emplace_back((float)currFrame / 24.0f, aiQuaternion(y->Evaluate(currFrame), z->Evaluate(currFrame), x->Evaluate(currFrame)));
 		}
 	} while (currFrame != lastFrame && currFrame < frameCount);
 
-	out_count = keyList.size();
-	aiQuatKey* theList = new aiQuatKey[keyList.size()];
-	memcpy(theList, keyList.data(), keyList.size() * sizeof(aiQuatKey));
-	return theList;
+	return keyList;
 }
 
 aiNode* AssimpAnimExporter::Export(CSkeleton& skeleton)
@@ -230,7 +220,7 @@ aiNode* AssimpAnimExporter::Export(CSkeleton& skeleton)
 aiNode* AssimpAnimExporter::ExportSubTree(CBone& bone, CSkeleton& skeleton, aiNode* parent)
 {
 	aiNode* node = new aiNode();
-	node->mName = aiString(bone.name);
+	node->mName.Set(bone.name);
 	node->mTransformation = Glm2Assimp::Matrix4(bone.transform);
 	node->mParent = parent;
 	std::vector<aiNode*> children = std::vector<aiNode*>();
@@ -252,17 +242,6 @@ aiBoneWrapper AssimpAnimExporter::ExportBone(CBone& bone)
 	// NOTE: The actual binding of verts to bones will be done elsewhere
 	return outBone;
 }
-
-/*aiBone** AssimpAnimExporter::ExportSkeleton(CSkeleton& skeleton)
-{
-	aiBone** boneArr = new aiBone*[skeleton.bones.size()];
-	for (int i = 0; i < skeleton.bones.size(); i++)
-	{
-		CBone& bone = skeleton.bones.at(i);
-		boneArr[i] = ExportBone(bone);
-	}
-	return boneArr;
-}*/
 
 // TODO: This should probably be part of aiMeshWrapper
 void AddSection(aiMeshWrapper& mesh, CSkelMeshSection& section, float* vertData)
@@ -287,6 +266,7 @@ void AddSection(aiMeshWrapper& mesh, CSkelMeshSection& section, float* vertData)
 		for (int i = 0; i < 8; i++)
 		{
 			if (idx[i] >= 255) continue;
+			if (wei[i] <= 0.0f) continue;
 			mesh.mBones[idx[i]].mWeights.emplace_back(vertBase + vert, wei[i]);
 		}
 	}
@@ -308,27 +288,6 @@ void AddSection(aiMeshWrapper& mesh, CSkelMeshSection& section, float* vertData)
 	else
 	{
 		assert(section.primType == GL_TRIANGLE_STRIP);
-		//faceCount = section.vertCount - 2;
-		//// TODO: NEED TO ACCOUNT FOR KICK_LIST!
-		//for (int f = 0; f < faceCount; f++)
-		//{
-		//	aiFace face;
-		//	face.mNumIndices = 3;
-		//	face.mIndices = new unsigned int[3];
-		//	if (f % 2 == 0)
-		//	{
-		//		face.mIndices[0] = vertBase + f + 0;
-		//		face.mIndices[1] = vertBase + f + 1;
-		//		face.mIndices[2] = vertBase + f + 2;
-		//	}
-		//	else
-		//	{
-		//		face.mIndices[1] = vertBase + f + 0;
-		//		face.mIndices[2] = vertBase + f + 2;
-		//		face.mIndices[0] = vertBase + f + 1;
-		//	}
-		//	mesh.mFaces.push_back(face);
-		//}
 		int fBase = 0;
 		for (unsigned int stripLen : section.kickList)
 		{
@@ -368,18 +327,19 @@ std::vector<aiMeshWrapper> AssimpAnimExporter::ExportSkelMesh(CSkelMesh& skelMes
 		exBones.push_back(ExportBone(b));
 
 	// 1 mesh per "material"
-	std::vector<aiMeshWrapper> meshList = std::vector<aiMeshWrapper>(skelMesh.textures.size());
-	for (int i = 0; i < skelMesh.textures.size(); i++)
+	std::vector<aiMeshWrapper> meshList = std::vector<aiMeshWrapper>(skelMesh.textures.size() + 1);
+	for (int i = 0; i < skelMesh.textures.size() + 1; i++)
 	{
 		meshList[i].mMaterialIndex = i;
 		meshList[i].mBones = exBones;
 	}
-
+	int dummyMatIdx = skelMesh.textures.size();
+	
 	int fptr = 0;
 	for (CSkelMeshSection& section : skelMesh.sections)
 	{
 		float* vertData = &(skelMesh.vertData[fptr]);
-		AddSection(meshList[section.textureIndex], section, vertData);
+		AddSection(meshList[section.textureIndex == 255 ? dummyMatIdx : section.textureIndex], section, vertData);
 		fptr += section.vertCount * (section.stride/sizeof(float));
 	}
 
@@ -438,7 +398,7 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	root->mTransformation = aiMatrix4x4();
 	scene.mAllNodes.push_back(root);
 	scene.mRootNode = root;
-	scene.mRootNode->mName = aiString(modelName);
+	scene.mRootNode->mName.Set(modelName);
 
 	aiNode* tree = Export(*model->skel);
 	scene.AddNodeToRoot(tree);
@@ -454,28 +414,17 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	}
 
 	scene.mRootNode->mNumMeshes = mesh0.size();
-	scene.mRootNode->mMeshes = new unsigned int[mesh0.size()];
-	for (int i = 0; i < mesh0.size(); i++)
+	scene.mRootNode->mMeshes = new unsigned int[scene.mRootNode->mNumMeshes];
+	for (int i = 0; i < scene.mRootNode->mNumMeshes; i++)
 	{
 		aiMesh* theMesh = mesh0[i].Finish();
-		theMesh->mName = aiString(modelName);
+		theMesh->mName.Set(modelName);
 		scene.mMeshes.push_back(theMesh);
 		scene.mRootNode->mMeshes[i] = i;
 	}
 
 	for (auto texInfo : model->textureObjects)
 	{
-		if (texInfo->name == "dummyTexture")
-		{
-			aiMaterial* mat = new aiMaterial();
-			aiString n = aiString("dummyMaterial");
-			aiColor4D c = aiColor4D(1, 1, 1, 1);
-			mat->AddProperty(&n, AI_MATKEY_NAME);
-			mat->AddProperty(&c, 1, AI_MATKEY_COLOR_DIFFUSE);
-			scene.mMaterials.push_back(mat);
-			continue;
-		}
-
 		std::filesystem::path outPath = exportFolder;
 		outPath.append(texInfo->name.c_str());
 		outPath.replace_extension(".png");
@@ -497,15 +446,26 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 		}
 	}
 
+	aiMaterial* mat = new aiMaterial();
+	aiString n = aiString("dummyMaterial");
+	aiColor4D c = aiColor4D(1, 1, 1, 1);
+	mat->AddProperty(&n, AI_MATKEY_NAME);
+	mat->AddProperty(&c, 1, AI_MATKEY_COLOR_DIFFUSE);
+	scene.mMaterials.push_back(mat);
+
 	if (anim != nullptr)
 	{
-		for (auto& animInfo : anim->animInfos)
+		/*for (auto& animInfo : anim->animInfos)
 		{
 			if (animInfo.idx != -1)
 			{
 				scene.mAnimations.push_back(Export(anim->anims[animInfo.idx], animInfo.name, *model->skel));
 			}
-		}
+		}*/
+		
+		auto& animInfo = anim->animInfos[anim->selectedIdx];
+		if (animInfo.idx != -1)
+			scene.mAnimations.push_back(Export(anim->anims[animInfo.idx], animInfo.name, *model->skel));
 	}
 	
 	aiScene* finalScene = scene.Finish();
@@ -519,7 +479,11 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	outFile.append(modelName);
 	outFile.replace_extension(format.ext);
 
-	if (AI_SUCCESS != exp.Export(finalScene, format.id, outFile.string(), aiPostProcessSteps::aiProcess_FlipUVs))
+	finalScene->mMetaData = new aiMetadata();
+	finalScene->mMetaData->Add("UnitScaleFactor", 100.0);
+	//finalScene->mMetaData->Add("CustomFrameRate", 30.0);
+
+	if (AI_SUCCESS != exp.Export(finalScene, format.id, outFile.string(), aiPostProcessSteps::aiProcess_FlipUVs | aiPostProcessSteps::aiProcess_FindInvalidData | aiPostProcessSteps::aiProcess_CalcTangentSpace | aiPostProcessSteps::aiProcess_ValidateDataStructure))
 	{
 		std::cerr << "[Export] Failed to export fbx file!" << std::endl;
 		std::cerr << "[Export] " << exp.GetErrorString() << std::endl;
