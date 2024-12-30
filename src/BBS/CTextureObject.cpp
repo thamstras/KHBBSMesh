@@ -49,12 +49,13 @@ void CTextureObject::CreateTexture()
 	uint32 psHeight = textureHeight;
 
 	std::vector<uint8> decodedData = std::vector<uint8>();
-	decodedData.reserve(4 * width * height);
+	decodedData.reserve(4 * psWidth * psHeight);
 
 	uint8* pixelData = image.data();
 	int pixelPtr = 0;
 	uint8* clutData = clut.data();
 	uint32 rem = (psWidth - width) * 4;
+	uint32 yrem = (psHeight - height);
 
 	for (int py = 0; py < height; py++)
 	{
@@ -168,6 +169,11 @@ void CTextureObject::CreateTexture()
 		for (int p = 0; p < rem; p++)
 			decodedData.push_back(0);
 	}
+
+	for (int y = 0; y < yrem; y++)
+		for (int p = 0; p < psWidth * 4; p++)
+			decodedData.push_back(0);
+		
 
 	texture = new CTexture(textureWidth, textureHeight, decodedData.data(), PF_RGBA32);
 }
