@@ -9,7 +9,7 @@ constexpr uint32_t bonMagic = MagicCode('B', 'O', 'N', '\0');
 
 
 
-PmoHeader ParsePmoHeader(std::ifstream& file)
+static PmoHeader ParsePmoHeader(std::ifstream& file)
 {
     PmoHeader header{};
     ReadStream(file, header.magic);
@@ -17,7 +17,10 @@ PmoHeader ParsePmoHeader(std::ifstream& file)
     {
         throw std::runtime_error("File is not a valid PMO file! (Magic code fail)");
     }
-    for (int i = 0; i < 4; i++) ReadStream(file, header.unk_04[i]);
+    ReadStream(file, header.num);
+    ReadStream(file, header.group);
+    ReadStream(file, header.version);
+    ReadStream(file, header.padding0);
     ReadStream(file, header.textureCount);
     ReadStream(file, header.padding1);
     ReadStream(file, header.skeletonOffset);
@@ -31,7 +34,7 @@ PmoHeader ParsePmoHeader(std::ifstream& file)
     return header;
 }
 
-PmoTexture ParsePmoTexture(std::ifstream& file)
+static PmoTexture ParsePmoTexture(std::ifstream& file)
 {
     PmoTexture tex{};
     ReadStream(file, tex.dataOffset); 
@@ -42,7 +45,7 @@ PmoTexture ParsePmoTexture(std::ifstream& file)
     return tex;
 }
 
-PmoVertexFormatFlags ParseVertexFormat(std::ifstream& file)
+static PmoVertexFormatFlags ParseVertexFormat(std::ifstream& file)
 {
     uint32_t raw;
     PmoVertexFormatFlags format;
@@ -51,14 +54,14 @@ PmoVertexFormatFlags ParseVertexFormat(std::ifstream& file)
     return format;
 }
 
-PmoMeshHeader ParsePmoMeshHeader(std::ifstream& file, bool hasSkeleton)
+static PmoMeshHeader ParsePmoMeshHeader(std::ifstream& file, bool hasSkeleton)
 {
     PmoMeshHeader header;
     ReadStream(file, header.vertexCount);
     ReadStream(file, header.textureIndex);
     ReadStream(file, header.vertexSize);
     header.vertexFormat = ParseVertexFormat(file);
-    ReadStream(file, header.unk_08);
+    ReadStream(file, header.group);
     ReadStream(file, header.triStripCount);
     ReadStream(file, header.attributes);
     if (hasSkeleton)
@@ -86,7 +89,7 @@ PmoMeshHeader ParsePmoMeshHeader(std::ifstream& file, bool hasSkeleton)
     return header;
 }
 
-PmoMesh ParsePmoMesh(std::ifstream& file, bool hasSkeleton)
+static PmoMesh ParsePmoMesh(std::ifstream& file, bool hasSkeleton)
 {
     PmoMesh mesh;
     mesh.header = ParsePmoMeshHeader(file, hasSkeleton);
@@ -97,7 +100,7 @@ PmoMesh ParsePmoMesh(std::ifstream& file, bool hasSkeleton)
     return mesh;
 }
 
-PmoSkelHeader ParsePmoSkeletonHeader(std::ifstream& file)
+static PmoSkelHeader ParsePmoSkeletonHeader(std::ifstream& file)
 {
     PmoSkelHeader header{};
     ReadStream(file, header.magic);
@@ -113,7 +116,7 @@ PmoSkelHeader ParsePmoSkeletonHeader(std::ifstream& file)
     return header;
 }
 
-PmoJoint ParsePmoJoint(std::ifstream& file)
+static PmoJoint ParsePmoJoint(std::ifstream& file)
 {
     PmoJoint joint{};
     ReadStream(file, joint.index);
@@ -133,7 +136,7 @@ PmoJoint ParsePmoJoint(std::ifstream& file)
     return joint;
 }
 
-PmoSkeleton ParsePmoSkeleton(std::ifstream& file)
+static PmoSkeleton ParsePmoSkeleton(std::ifstream& file)
 {
     PmoSkeleton skele;
     skele.header = ParsePmoSkeletonHeader(file);
@@ -177,22 +180,22 @@ PmoFile PmoFile::ReadPmoFile(std::ifstream& file, std::streamoff base)
     return pmo;
 }
 
-bool PmoFile::hasTextures()
+bool PmoFile::hasTextures() const
 {
     return (this->header.textureCount > 0);
 }
 
-bool PmoFile::hasMesh0()
+bool PmoFile::hasMesh0() const
 {
     return (this->header.mesh0Offset > 0);
 }
 
-bool PmoFile::hasMesh1()
+bool PmoFile::hasMesh1() const
 {
     return (this->header.mesh1Offset > 0);
 }
 
-bool PmoFile::hasSkeleton()
+bool PmoFile::hasSkeleton() const
 {
     return (this->header.skeletonOffset > 0);
 }

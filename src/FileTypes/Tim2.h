@@ -104,7 +104,7 @@ public:
 	Tm2FileHeader header;
 	std::vector<Tm2Picture> pictures;
 
-	uint16_t pictureCount();
+	uint16_t pictureCount() const;
 
 	static Tm2File ReadTm2File(std::ifstream& file, std::streamoff base = 0);
 };

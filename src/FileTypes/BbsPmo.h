@@ -6,7 +6,10 @@
 struct PmoHeader
 {
     uint32_t magic;
-    uint8_t unk_04[4];      // TODO: This is num, group, version, padding
+    uint8_t num;
+    uint8_t group;
+    uint8_t version;
+    uint8_t padding0;
     uint16_t textureCount;
     uint16_t padding1;
     uint32_t skeletonOffset;
@@ -140,7 +143,7 @@ struct PmoMeshHeader
     uint8_t textureIndex;
     uint8_t vertexSize;
     PmoVertexFormatFlags vertexFormat;
-    uint8_t unk_08;                 // group
+    uint8_t group;
     uint8_t triStripCount;
     uint16_t attributes;
     uint8_t jointIndices[8];
@@ -174,8 +177,8 @@ public:
 
     static PmoFile ReadPmoFile(std::ifstream& file, std::streamoff base = 0);
 
-    bool hasTextures();
-    bool hasMesh0();
-    bool hasMesh1();
-    bool hasSkeleton();
+    bool hasTextures() const;
+    bool hasMesh0() const;
+    bool hasMesh1() const;
+    bool hasSkeleton() const;
 };
