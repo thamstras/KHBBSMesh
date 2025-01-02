@@ -71,6 +71,7 @@ namespace BBSMesh
 		AnimType currAnim;
 
 		bool drawSkel = false;
+		bool showCamWindow = false;
 
 		std::string modelName;
 		std::vector<ExportFormat> exportFormats;
@@ -99,6 +100,7 @@ namespace BBSMesh
 		void GUI_SideBar();
 		void GUI_Modals();
 		void GUI_ExportOptions();
+		void GUI_CamWindow();
 
 		void DrawSkeleton();
 		void SetAnimType(AnimType type);

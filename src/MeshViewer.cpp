@@ -81,7 +81,7 @@ void MeshViewer::Run()
 	m_graphicsContext = std::make_unique<GraphicsContext>(shaders);
 
 	m_rootRenderContext = m_graphicsContext->CreateRenderContext();
-	m_currentCamera = std::make_shared<CCamera>(glm::vec3(0.0f, 0.0f, -5.0f));
+	m_currentCamera = std::make_shared<CCamera>(glm::vec3(0.0f, 1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.f, 0.f);
 	// TODO: We need a different way of handling shader selection. Once skeletal meshes are in
 	// this manual method is going to grow out of hand.
 	m_rootRenderContext->render.default_shader = "unlit_vcol_tex_skel";
@@ -115,6 +115,7 @@ void MeshViewer::Run()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		//ImGui::ShowDemoWindow();
 
 		// ProcessInput before NewFrame so we have the newest camera transform
 		ProcessInput(m_window.window, deltaTime, worldTime);
@@ -178,6 +179,7 @@ bool MeshViewer::Init()
 	glfwSetWindowUserPointer(window, this);
 	glfwMakeContextCurrent(window);
 	if (!m_settings.USE_VSYNC) glfwSwapInterval(0);
+	else glfwSwapInterval(1);
 
 	if (glfwRawMouseMotionSupported()) m_mouse.rawMotionAvailible = true;
 

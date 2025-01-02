@@ -11,6 +11,8 @@ void MeshViewer::ProcessGUI()
 	GUI_Modals();
 
 	GUI_ExportOptions();
+
+	GUI_CamWindow();
 }
 
 void MeshViewer::GUI_MenuBar()
@@ -73,6 +75,16 @@ void MeshViewer::GUI_MenuBar()
 			ImGui::EndMenu();
 		}
 
+		if (ImGui::BeginMenu("Camera"))
+		{
+			if (ImGui::MenuItem("Reset Camera"))
+				m_currentCamera->Reset(glm::vec3(0.0f, 1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.f, 0.f);
+			if (ImGui::MenuItem("Show Camera Window"))
+				showCamWindow = true;
+
+			ImGui::EndMenu();
+		}
+
 		if (ImGui::BeginMenu("Help"))
 		{
 			if (ImGui::MenuItem("About"))
@@ -128,7 +140,7 @@ void MeshViewer::GUI_SideBar()
 		if (m_model == nullptr)
 		{
 			ImGui::Text("Nothing loaded.");
-}
+		}
 		else
 		{
 			ImGui::Text("Model num %d group %d", (int)m_model->num, (int)m_model->group);
@@ -253,5 +265,20 @@ void MeshViewer::GUI_ExportOptions()
 		}
 
 		ImGui::EndPopup();
+	}
+}
+
+void MeshViewer::GUI_CamWindow()
+{
+	if (showCamWindow)
+	{
+		if (ImGui::Begin("Camera", &showCamWindow))
+		{
+			CCamera* camera = m_currentCamera.get();
+			ImGui::Text("Avg. %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::Text("Pos { %.2f, %.2f, %.2f }", camera->Position.x, camera->Position.y, camera->Position.z);
+			ImGui::Text("Pitch %.2f Yaw %.2f", camera->Pitch, camera->Yaw);
+		}
+		ImGui::End();
 	}
 }
