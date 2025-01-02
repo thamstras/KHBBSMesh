@@ -122,6 +122,52 @@ void MeshViewer::GUI_SideBar()
 		}
 	}
 	ImGui::End();
+
+	if (ImGui::Begin("Model"))
+	{
+		if (m_model == nullptr)
+		{
+			ImGui::Text("Nothing loaded.");
+}
+		else
+		{
+			ImGui::Text("Model num %d group %d", (int)m_model->num, (int)m_model->group);
+			ImGui::Text("Textures %d Triangles %d Verts %d", m_model->textureNames.size(), m_model->fileTriCount, m_model->fileVertCount);
+			ImGui::Text("Scale %f Sec0: %d Sec1: %d", m_model->scale, m_model->sections.size(), m_model->transSections.size());
+			if (m_model->textureNames.size() > 0)
+			{
+				if (ImGui::TreeNode("Textures"))
+				{
+					for (const std::string& texName : m_model->textureNames)
+						ImGui::Text(texName.c_str());
+					ImGui::TreePop();
+				}
+			}
+			if (m_model->sections.size() > 0)
+			{
+				if (ImGui::TreeNode("Sections 0"))
+				{
+					for (int i = 0; i < m_model->sections.size(); i++)
+					{
+						ImGui::Text("V %d T %d G %d F [%s]", m_model->sections[i]->vertexCount, m_model->sections[i]->textureIndex, m_model->sections[i]->group, m_model->sections[i]->formatStr.c_str());
+					}
+					ImGui::TreePop();
+				}
+			}
+			if (m_model->transSections.size() > 0)
+			{
+				if (ImGui::TreeNode("Sections 1"))
+				{
+					for (int i = 0; i < m_model->transSections.size(); i++)
+					{
+						ImGui::Text("V %d T %d G %d F [%s]", m_model->transSections[i]->vertexCount, m_model->transSections[i]->textureIndex, m_model->transSections[i]->group, m_model->transSections[i]->formatStr.c_str());
+					}
+					ImGui::TreePop();
+				}
+			}
+		}
+	}
+	ImGui::End();
 }
 
 void MeshViewer::GUI_Modals()
