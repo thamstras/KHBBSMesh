@@ -433,6 +433,7 @@ CSkelMesh* CSkelModelObject::BuildMesh(std::vector<CSkelModelSection*>& sections
 			meshSection.kickList.push_back((unsigned int)kick);
 		}
 		meshSection.primType = modelSection->primativeType;
+		meshSection.hideGroup = modelSection->group;
 		mesh->sections.push_back(meshSection);
 		int rp = 0;
 		for (SkelVert& vert : modelSection->vertexData)

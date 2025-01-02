@@ -106,6 +106,7 @@ struct RenderContext
 		unsigned int obj_id;
 		unsigned int section_id;
 		glm::vec4 highlight_color;
+		unsigned int hide_flags;
 	} debug;
 
 	struct {

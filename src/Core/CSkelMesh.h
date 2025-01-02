@@ -16,6 +16,7 @@ struct CSkelMeshSection
 	bool twoSided;
 	bool blend;
 	std::vector<unsigned int> kickList;
+	uint8_t hideGroup;
 };
 
 class CSkelMesh

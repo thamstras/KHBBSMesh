@@ -171,6 +171,12 @@ void CSkelMesh::Draw(RenderContext& context, const glm::vec3& position, const gl
 	unsigned int secBase = 0;
 	for (CSkelMeshSection& section : sections)
 	{
+		if (context.debug.hide_flags & (1 << section.hideGroup))
+		{
+			secBase += section.vertCount;
+			continue;
+		}
+
 		if (section.textureIndex != 0xFF)
 		{
 			shader->setInt("tex_diffuse"s, section.textureIndex);

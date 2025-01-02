@@ -1,4 +1,5 @@
 #include "MeshViewer.h"
+#include <bitset>
 
 using namespace BBSMesh;
 
@@ -177,6 +178,20 @@ void MeshViewer::GUI_SideBar()
 					ImGui::TreePop();
 				}
 			}
+
+			ImGui::Separator();
+
+			ImGui::Text("Hide flags");
+			int maxGroups = m_model->group;
+			std::bitset<32> bits = std::bitset<32>(m_rootRenderContext->debug.hide_flags);
+			for (int g = 0; g < maxGroups; g++)
+			{
+				bool v = bits[g];
+				std::string label = std::format("{}", g);
+				if (ImGui::Checkbox(label.c_str(), &v))
+					bits[g] = v;
+			}
+			m_rootRenderContext->debug.hide_flags = (unsigned int)bits.to_ulong();
 		}
 	}
 	ImGui::End();

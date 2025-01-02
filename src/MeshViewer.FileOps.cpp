@@ -69,6 +69,8 @@ void MeshViewer::OpenModelFile()
 	SetAnimType(AnimType::GuiAnim);
 
 	modelName = std::filesystem::path(path).stem().string();
+
+	m_rootRenderContext->debug.hide_flags = 0;
 }
 
 void MeshViewer::CloseModelFile()
