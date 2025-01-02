@@ -12,6 +12,7 @@ namespace BBS
 {
 
 	class CSkelModelSection;
+	struct SkelVert;
 
 	class CSkelModelObject : public CRenderObject
 	{
@@ -31,9 +32,16 @@ namespace BBS
 
 		void SetAnimDriver(CAnimationDriver* driver);
 
+		uint8_t num;
+		uint8_t group;
+		uint16_t fileTriCount;
+		uint16_t fileVertCount;
+
 		float scale;
 		glm::vec4 bbox[8];
 		AABBox boundingBox;
+		int triCount;
+		int vertCount;
 
 		std::vector<CSkelModelSection*> sections;
 		std::vector<CSkelModelSection*> transSections;
@@ -57,15 +65,25 @@ namespace BBS
 		int vertexCount;
 		VertexFlags flags;
 		GLenum primativeType;
-		std::vector<uint16_t> primCount;
+		std::vector<uint16_t> primCounts;
 		uint16_t attributes;
 		std::array<uint8_t, 8> boneIdxs;
 		uint32_t globalColor;
+		uint8_t group;
+		std::string formatStr;
 
-		std::vector<float> vertexData;
+		std::vector<SkelVert> vertexData;
 
 		CSkelModelSection();
 		void LoadSection(PmoMesh& mesh);
+	};
+
+	struct SkelVert
+	{
+		glm::vec3 pos;
+		glm::vec4 color;
+		glm::vec2 tex;
+		std::array<float, 8> weights;
 	};
 
 }

@@ -8,7 +8,7 @@ int main(int argc, char** argv)
 		app.Run();
 		return EXIT_SUCCESS;
 	}
-	catch (std::exception ex)
+	catch (std::exception& ex)
 	{
 		std::cerr << "FATAL: " << ex.what() << std::endl;
 		// TODO: MessageBox(something)?
