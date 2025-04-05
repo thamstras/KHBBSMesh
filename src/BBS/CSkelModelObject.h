@@ -75,7 +75,7 @@ namespace BBS
 		std::vector<SkelVert> vertexData;
 
 		CSkelModelSection();
-		void LoadSection(PmoMesh& mesh);
+		void LoadSection(PmoMesh& mesh, bool hasSkeleton);
 	};
 
 	struct SkelVert

@@ -72,7 +72,7 @@ void CSkelModelObject::LoadPmo(PmoFile& pmo, bool loadTextures)
 		{
 			if (mesh.header.vertexCount == 0) continue;
 			CSkelModelSection* section = new CSkelModelSection();
-			section->LoadSection(mesh);
+			section->LoadSection(mesh, pmo.hasSkeleton());
 			sections.push_back(section);
 		}
 	}
@@ -84,7 +84,7 @@ void CSkelModelObject::LoadPmo(PmoFile& pmo, bool loadTextures)
 		{
 			if (mesh.header.vertexCount == 0) continue;
 			CSkelModelSection* section = new CSkelModelSection();
-			section->LoadSection(mesh);
+			section->LoadSection(mesh, pmo.hasSkeleton());
 			transSections.push_back(section);
 		}
 	}
@@ -199,7 +199,7 @@ static float ReadFloat(uint8_t* data, uint8_t& readPtr)
 	return bit_cast<float, uint32_t>(uval);
 }
 
-void CSkelModelSection::LoadSection(PmoMesh& mesh)
+void CSkelModelSection::LoadSection(PmoMesh& mesh, bool hasSkeleton)
 {
 	uint32_t constDiffuse = 0;
 	int elementCount = 0;
@@ -228,7 +228,7 @@ void CSkelModelSection::LoadSection(PmoMesh& mesh)
 		this->flags.hasTex = 1;
 		elementCount += 2;
 	}
-	if (format.weights != 0)
+	if (format.weights != 0 || hasSkeleton)
 	{
 		this->flags.hasWeights = 1;
 		elementCount += format.skinning + 1;
@@ -236,7 +236,7 @@ void CSkelModelSection::LoadSection(PmoMesh& mesh)
 	this->flags.hasPosition = 1;
 	elementCount += 3;
 
-	if (format.weights)
+	if (format.weights || hasSkeleton)
 	{
 		for (int i = 0; i < 8; i++) this->boneIdxs[i] = mesh.header.jointIndices[i];
 	}
@@ -294,6 +294,10 @@ void CSkelModelSection::LoadSection(PmoMesh& mesh)
 		switch (format.weights)
 		{
 		case 0: // none 
+			if (hasSkeleton)
+			{
+				vert.weights[0] = 1.0f;
+			}
 			break;
 		case 1: // uint8
 			for (int i = 0; i < 8; i++)
