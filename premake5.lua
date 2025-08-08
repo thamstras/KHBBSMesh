@@ -5,7 +5,7 @@
 GLFW_PATH = "C:/Repos/Libraries/glfw/glfw-3.4.bin.WIN32/"
 GLM_PATH = "C:/Repos/Libraries/glm/1.0.1/"
 GLI_PATH = "C:/Repos/Libraries/gli/0.8.2.0/"
-ASSIMP_PATH = "C:/Repos/Libraries/assimp/5.2.5/"
+ASSIMP_PATH = "C:/Repos/Libraries/assimp/assimp-6.0.1/"
 
 
 workspace "KHBBSMesh" 
@@ -68,14 +68,15 @@ workspace "KHBBSMesh"
 		
 		-- ASSIMP
 		includedirs(ASSIMP_PATH .. "include")
+		includedirs(ASSIMP_PATH .. "build/Win32/include")
 		filter("configurations:Debug")
 			links("assimp-vc143-mtd")
-			postbuildcommands("{COPY} " .. ASSIMP_PATH .. "bin/Debug/assimp-vc143-mtd.dll %{cfg.targetdir}")
-			postbuildcommands("{COPY} " .. ASSIMP_PATH .. "bin/Debug/assimp-vc143-mtd.pdb %{cfg.targetdir}")
-			libdirs(ASSIMP_PATH .. "lib/Debug")
+			postbuildcommands("{COPY} " .. ASSIMP_PATH .. "build/Win32/bin/Debug/assimp-vc143-mtd.dll %{cfg.targetdir}")
+			postbuildcommands("{COPY} " .. ASSIMP_PATH .. "build/Win32/bin/Debug/assimp-vc143-mtd.pdb %{cfg.targetdir}")
+			libdirs(ASSIMP_PATH .. "build/Win32/lib/Debug")
 		filter("configurations:Release")
 			links("assimp-vc143-mt")
-			postbuildcommands("{COPY} ".. ASSIMP_PATH .. "bin/RelWithDebInfo/assimp-vc143-mt.dll %{cfg.targetdir}")
-			libdirs(ASSIMP_PATH .. "lib/RelWithDebInfo")
+			postbuildcommands("{COPY} ".. ASSIMP_PATH .. "build/Win32/bin/RelWithDebInfo/assimp-vc143-mt.dll %{cfg.targetdir}")
+			libdirs(ASSIMP_PATH .. "build/Win32/lib/RelWithDebInfo")
 		filter({})
 		
