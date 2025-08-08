@@ -9,7 +9,9 @@
 #include "BBS/CSkelModelObject.h"
 #include "CGuiAnimationProvider.h"
 #include "BBS/CAnimSet.h"
-#include <AssimpInterface.h>
+#include "AssimpInterface.h"
+#include <fstream>
+#include "ArcLoader.h"
 
 namespace BBSMesh
 {
@@ -70,6 +72,8 @@ namespace BBSMesh
 		BBS::CBBSAnimSet* m_anims = nullptr;
 		AnimType currAnim;
 
+		ArcLoader* m_arcLoader = nullptr;
+
 		bool drawSkel = false;
 		bool showCamWindow = false;
 
@@ -89,11 +93,15 @@ namespace BBSMesh
 		void ScheduleDelayedProcess(DelayedFunc func);
 
 		void OpenModelFile();
+		void OpenModelFile(std::string path, std::ifstream& fs);
 		void CloseModelFile();
 		void ExportModelFile();
 		void OpenAnimFile();
+		void OpenAnimFile(std::string path, std::ifstream& fs);
 		void CloseAnimFile();
 		void ExportAnimFile();
+		void OpenArcFile();
+		void LoadFromArcFile(std::string name, std::ifstream& fs);
 		void HideMessageModal();
 
 		void GUI_MenuBar();

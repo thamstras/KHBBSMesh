@@ -12,6 +12,7 @@ enum class EFileOpenType
 {
 	FILE_PMO,
 	FILE_PAM,
+	FILE_ARC,
 	FILE_ANY
 };
 

@@ -14,6 +14,17 @@ void MeshViewer::ProcessGUI()
 	GUI_ExportOptions();
 
 	GUI_CamWindow();
+
+	if (m_arcLoader != nullptr)
+	{
+		bool stayOpen = m_arcLoader->gui_window();
+		if (!stayOpen)
+		{
+			delete m_arcLoader;
+			m_arcLoader = nullptr;
+		}
+	}
+
 }
 
 void MeshViewer::GUI_MenuBar()
@@ -38,6 +49,11 @@ void MeshViewer::GUI_MenuBar()
 				if (ImGui::MenuItem("Anim", "Ctrl+A"))
 				{
 					ScheduleDelayedProcess(&MeshViewer::OpenAnimFile);
+				}
+
+				if (ImGui::MenuItem("Arc"))
+				{
+					ScheduleDelayedProcess(&MeshViewer::OpenArcFile);
 				}
 
 				ImGui::EndMenu();

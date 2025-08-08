@@ -21,10 +21,17 @@ void MeshViewer::OpenModelFile()
 		return;
 	}
 
+	OpenModelFile(path, fs);
+}
+
+void MeshViewer::OpenModelFile(std::string path, std::ifstream& fs)
+{
+	std::streamoff base = fs.tellg();
+
 	PmoFile newFile;
 	try
 	{
-		newFile = PmoFile::ReadPmoFile(fs, 0);
+		newFile = PmoFile::ReadPmoFile(fs, base);
 	}
 	catch (std::exception ex)
 	{
@@ -46,8 +53,9 @@ void MeshViewer::OpenModelFile()
 	auto texMap = std::unordered_map<std::string, BBS::CTextureInfo*>();
 	for (auto& texInfo : newFile.textures)
 	{
-		fs.seekg(texInfo.dataOffset);
-		Tm2File texFile = Tm2File::ReadTm2File(fs, texInfo.dataOffset);
+		std::streamoff texBase = base + texInfo.dataOffset;
+		fs.seekg(texBase);
+		Tm2File texFile = Tm2File::ReadTm2File(fs, texBase);
 		BBS::CTextureObject* texObj = new BBS::CTextureObject();
 		texObj->LoadTM2(texFile);
 		texObj->CreateTexture();
@@ -83,6 +91,7 @@ void MeshViewer::CloseModelFile()
 	m_textures.clear();
 	m_rootRenderContext->render.textureLibrary->PruneTextures();
 	if (m_guiAnim) delete m_guiAnim;
+	m_guiAnim = nullptr;
 }
 
 void MeshViewer::OpenAnimFile()
@@ -101,10 +110,20 @@ void MeshViewer::OpenAnimFile()
 		return;
 	}
 
+	OpenAnimFile(path, fs);
+}
+
+void MeshViewer::OpenAnimFile(std::string path, std::ifstream& fs)
+{
+	if (m_model == nullptr)
+		return;
+
+	std::streamoff base = fs.tellg();
+
 	PamFile file;
 	try
 	{
-		file = PamFile::ReadPamFile(fs, 0);
+		file = PamFile::ReadPamFile(fs, base);
 	}
 	catch (std::exception ex)
 	{
@@ -125,6 +144,42 @@ void MeshViewer::CloseAnimFile()
 
 	if (m_anims != nullptr) delete m_anims;
 	m_anims = nullptr;
+}
+
+void MeshViewer::OpenArcFile()
+{
+	std::string path;
+	if (!m_fileManager->OpenFileWindow(path, EFileOpenType::FILE_ARC))
+		return;
+
+	if (m_arcLoader != nullptr)
+	{
+		delete m_arcLoader;
+		m_arcLoader = nullptr;
+	}
+
+	try
+	{
+		m_arcLoader = new ArcLoader(path);
+	}
+	catch (std::exception ex)
+	{
+		CFileManager::ShowMessageBox(ex.what());
+		return;
+	}
+
+	using namespace std::placeholders;
+	m_arcLoader->Attatch(std::bind(&MeshViewer::LoadFromArcFile, this, _1, _2));
+}
+
+void MeshViewer::LoadFromArcFile(std::string name, std::ifstream& fs)
+{
+	std::filesystem::path namep = std::filesystem::path(name);
+	auto ext = namep.extension();
+	if (ext == ".pmo")
+		OpenModelFile(name, fs);
+	else if (ext == ".pam")
+		OpenAnimFile(name, fs);
 }
 
 void MeshViewer::ExportAnimFile()

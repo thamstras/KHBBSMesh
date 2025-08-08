@@ -41,9 +41,28 @@ LPCTSTR GetFileTypeFilter(EFileOpenType type)
 		return TEXT("PMO Files\0*.pmo\0All Files\0*.*\0\0");
 	case EFileOpenType::FILE_PAM:
 		return TEXT("PAM Files\0*.pam\0All Files\0*.*\0\0");
+	case EFileOpenType::FILE_ARC:
+		return TEXT("ARC Files\0*.arc\0All Files\0*.*\0\0");
 	case EFileOpenType::FILE_ANY:
 	default:
 		return TEXT("All Files\0*.*\0\0");
+	}
+}
+
+LPCTSTR GetFileTypeDefault(EFileOpenType type)
+{
+	switch (type)
+	{
+	case EFileOpenType::FILE_PMO:
+		return TEXT("pmo");
+	case EFileOpenType::FILE_PAM:
+		return TEXT("pam");
+	case EFileOpenType::FILE_ARC:
+		return TEXT("arc");
+	case EFileOpenType::FILE_ANY:
+		return NULL;
+	default:
+		break;
 	}
 }
 
@@ -64,7 +83,7 @@ bool CFileManager::OpenFileWindow(std::string& out_path, EFileOpenType type)
 	ofn.lpstrInitialDir = resourcesDir.c_str();
 	ofn.lpstrTitle = TEXT("Select a File");
 	ofn.Flags = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST;
-	ofn.lpstrDefExt = TEXT("pmp");
+	ofn.lpstrDefExt = GetFileTypeDefault(type);
 
 	if (GetOpenFileName(&ofn))
 	{
