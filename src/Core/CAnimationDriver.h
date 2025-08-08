@@ -2,6 +2,12 @@
 #include "Common.h"
 #include "CSkeleton.h"
 
+struct BoneFrame
+{
+	glm::mat4 fullTransform;
+	glm::mat4 unscaledTransform;
+};
+
 // Polymorphic base class
 class CAnimationProvider
 {
@@ -10,7 +16,7 @@ public:
 	virtual ~CAnimationProvider() {};
 	virtual int BoneCount() = 0;
 	virtual void Update(float deltaTime, double worldTime) = 0;
-	virtual glm::mat4 GetBone(int idx) = 0;
+	virtual BoneFrame GetBone(int idx) = 0;
 	
 	virtual void SetAnimTime(float time) = 0;
 	virtual void SetPlayRate(float rate) = 0;

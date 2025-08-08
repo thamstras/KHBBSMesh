@@ -21,9 +21,10 @@ void CGUIAnimationProvider::Update(float delta, double world)
 	// NOP
 }
 
-glm::mat4 CGUIAnimationProvider::GetBone(int idx)
+BoneFrame CGUIAnimationProvider::GetBone(int idx)
 {
-	return skeleton.bones[idx].transform * currTransforms[idx].GetTransform();
+	glm::mat4 mat = skeleton.bones[idx].transform * currTransforms[idx].GetTransform();
+	return { mat, mat };
 }
 
 void CGUIAnimationProvider::SetAnimTime(float time)

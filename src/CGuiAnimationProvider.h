@@ -12,7 +12,7 @@ public:
 
 	virtual int BoneCount() override;
 	virtual void Update(float deltaTime, double worldTime) override;
-	virtual glm::mat4 GetBone(int idx) override;
+	virtual BoneFrame GetBone(int idx) override;
 
 	virtual void SetAnimTime(float time) override;
 	virtual void SetPlayRate(float rate) override;

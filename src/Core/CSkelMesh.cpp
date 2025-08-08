@@ -126,7 +126,7 @@ void CSkelMesh::Draw(RenderContext& context, const glm::vec3& position, const gl
 	//       If anyone does find a model with > 200 bones we might need to switch to uploading
 	//       just the bones that section uses, which would be a *massive* PITA.
 	// TODO: Uniform Buffer Object?
-	const int MAX_BONE = 200;
+	const int MAX_BONE = 242;
 	if (driver != nullptr)
 	{
 		//REMEMBER the array you get back from the driver might be smaller than MAX_BONE

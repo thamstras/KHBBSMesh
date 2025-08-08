@@ -118,20 +118,23 @@ std::unique_ptr<IAnimChannel> CBoneAnim::MakeChannel(std::optional<PamAnimChanne
 	return std::make_unique<CKeyframeChannel>(keyframes);
 }
 
-glm::mat4 CBoneAnim::Evaluate(int frame)
+BoneFrame CBoneAnim::Evaluate(int frame)
 {
 	glm::vec3 translate = glm::vec3(tx->Evaluate(frame), ty->Evaluate(frame), tz->Evaluate(frame));
 	glm::vec3 rotate = glm::vec3(rx->Evaluate(frame), ry->Evaluate(frame), rz->Evaluate(frame));
 	glm::vec3 scale = glm::vec3(sx->Evaluate(frame), sy->Evaluate(frame), sz->Evaluate(frame));
 
-	glm::quat rquat = glm::quat(rotate);
+	//glm::quat rquat = glm::quat(rotate);
 
 	glm::mat4 t = glm::mat4(1.0f);
+	//t = glm::rotate(t, glm::angle(rquat), glm::axis(rquat));
 	t = glm::translate(t, translate);
-	t = glm::rotate(t, glm::angle(rquat), glm::axis(rquat));
+	t = glm::rotate(t, rotate.z, glm::vec3(0.0f, 0.0f, 1.0f));
+	t = glm::rotate(t, rotate.y, glm::vec3(0.0f, 1.0f, 0.0f));
+	t = glm::rotate(t, rotate.x, glm::vec3(1.0f, 0.0f, 0.0f));
 	t = glm::scale(t, scale);
 
-	return t;
+	return { t, t };
 }
 
 CBBSAnim::CBBSAnim(PamAnim& pamAnim)
@@ -195,9 +198,9 @@ void CBBSAnim::SetTime(float time)
 	CalcFrame();
 }
 
-glm::mat4 CBBSAnim::GetBone(int boneIdx)
+BoneFrame CBBSAnim::GetBone(int boneIdx)
 {
-	if (boneIdx >= boneCount) return glm::mat4(1.0f);
+	if (boneIdx >= boneCount) return { glm::mat4(1.0f), glm::mat4(1.0f) };
 	return bones[boneIdx].Evaluate(currFrame);
 }
 
@@ -241,10 +244,10 @@ void CBBSAnimSet::Update(float deltaTime, double worldTime)
 	}
 }
 
-glm::mat4 CBBSAnimSet::GetBone(int idx)
+BoneFrame CBBSAnimSet::GetBone(int idx)
 {
 	AnimInfo& currAnim = animInfos[selectedIdx];
-	glm::mat4 boneTransform = skeleton.bones[idx].transform;
+	BoneFrame boneTransform = { skeleton.bones[idx].transform, skeleton.bones[idx].transform };
 	if (currAnim.idx != -1)
 		boneTransform = anims[currAnim.idx].GetBone(idx);
 
@@ -346,7 +349,7 @@ void CBBSAnimSet::GUI_DrawControls()
 			for (int i = 0; i < bcount; i++)
 			{
 				CBone& bone = skeleton.bones[i];
-				Transform t = Transform::Decompose(GetBone(i));
+				Transform t = Transform::Decompose(GetBone(i).fullTransform);
 				ImGui::PushID(i);
 				ImGui::Text("Bone: %s", bone.name.c_str());
 				ImGui::DragFloat3("Position", glm::value_ptr(t.position), 0.1f);
