@@ -308,6 +308,15 @@ void CSkelModelSection::LoadSection(PmoMesh& mesh, bool hasSkeleton)
 					vert.weights[i] = 0.0f;
 			}
 			break;
+		case 3:
+			for (int i = 0; i < 8; i++)
+			{
+				if (i <= format.skinning)
+					vert.weights[i] = ReadFloat(pVertStart, readPtr);
+				else
+					vert.weights[i] = 0.0f;
+			}
+			break;
 		default:
 			throw std::runtime_error("Bad weights format");
 		}

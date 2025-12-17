@@ -5,7 +5,7 @@
 GLFW_PATH = "C:/Repos/Libraries/glfw/glfw-3.4.bin.WIN32/"
 GLM_PATH = "C:/Repos/Libraries/glm/1.0.1/"
 GLI_PATH = "C:/Repos/Libraries/gli/0.8.2.0/"
-ASSIMP_PATH = "C:/Repos/Libraries/assimp/assimp-6.0.1/"
+ASSIMP_PATH = "C:/Repos/Libraries/assimp/assimp-6.0.2/"
 
 
 workspace "KHBBSMesh" 

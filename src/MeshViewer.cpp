@@ -149,12 +149,120 @@ void MeshViewer::Run()
 	// TODO: Shutdown
 }
 
+GLFWwindow* MakeTheWindow(int width, int height, const char* title)
+{
+#define MAKE_GL_VER(X, Y) ((X << 8) | (Y))
+#define BREAK_GL_VER_MAJ(X) ((X >> 8) & 0xFF)
+#define BREAK_GL_VER_MIN(X) (X & 0xFF)
+	int verArr[] = {
+		MAKE_GL_VER(4, 6),
+		MAKE_GL_VER(4, 5),
+		MAKE_GL_VER(4, 4),
+		MAKE_GL_VER(4, 3),
+		MAKE_GL_VER(4, 2),
+		MAKE_GL_VER(4, 1),
+		MAKE_GL_VER(4, 0),
+		MAKE_GL_VER(3, 3)
+	};
+	GLFWwindow* pWin = nullptr;
+	for (int i = 0; i < 8; i++)
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, BREAK_GL_VER_MAJ(verArr[i]));
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, BREAK_GL_VER_MIN(verArr[i]));
+		pWin = glfwCreateWindow(width, height, title, NULL, NULL);
+		if (pWin != nullptr)
+			break;
+	}
+	return pWin;
+#undef BREAK_GL_VER_MIN
+#undef BREAK_GL_VER_MAJ
+#undef MAKE_GL_VER
+}
+
+void PrintGLCaps()
+{
+	std::cout << "[GS] BEGIN GL CAPS" << std::endl;
+
+	std::cout << "Supported GL version: ";
+	if (GLAD_GL_VERSION_4_6) std::cout << "4.6";
+	else if (GLAD_GL_VERSION_4_5) std::cout << "4.5";
+	else if (GLAD_GL_VERSION_4_4) std::cout << "4.4";
+	else if (GLAD_GL_VERSION_4_3) std::cout << "4.3";
+	else if (GLAD_GL_VERSION_4_2) std::cout << "4.2";
+	else if (GLAD_GL_VERSION_4_1) std::cout << "4.1";
+	else if (GLAD_GL_VERSION_4_0) std::cout << "4.0";
+	else if (GLAD_GL_VERSION_3_3) std::cout << "3.3";
+	else "???";
+	std::cout << std::endl;
+
+	// Core Caps
+#define CHECK_CORE(X, A, B) if (GLAD_GL_VERSION_ ##A ##_ ##B || GLAD_ ##X) std::cout << #X << std::endl
+	CHECK_CORE(GL_ARB_texture_filter_anisotropic, 4, 6);
+	CHECK_CORE(GL_ARB_clip_control, 4, 5);
+	CHECK_CORE(GL_ARB_direct_state_access, 4, 5);
+	CHECK_CORE(GL_ARB_buffer_storage, 4, 4);
+	CHECK_CORE(GL_ARB_explicit_uniform_location, 4, 3);
+	CHECK_CORE(GL_ARB_multi_draw_indirect, 4, 3);
+	CHECK_CORE(GL_ARB_texture_storage_multisample, 4, 3);
+	CHECK_CORE(GL_ARB_vertex_attrib_binding, 4, 3);
+	CHECK_CORE(GL_ARB_texture_storage, 4, 2);
+	CHECK_CORE(GL_ARB_conservative_depth, 4, 2);
+	CHECK_CORE(GL_ARB_get_program_binary, 4, 1);
+	CHECK_CORE(GL_ARB_separate_shader_objects, 4, 1);
+	CHECK_CORE(GL_ARB_draw_indirect, 4, 0);
+	CHECK_CORE(GL_ARB_sampler_objects, 3, 3);
+	CHECK_CORE(GL_ARB_texture_swizzle, 3, 3);
+#undef CHECK_CORE
+
+	// EXT Caps
+#define CHECK_EXT(X) if (GLAD_ ##X) std::cout << #X << std::endl
+	CHECK_EXT(GL_EXT_texture_filter_anisotropic);
+	CHECK_EXT(GL_EXT_direct_state_access);
+	CHECK_EXT(GL_EXT_texture_storage);
+	CHECK_EXT(GL_EXT_separate_shader_objects);
+	CHECK_EXT(GL_EXT_texture_swizzle);
+	CHECK_EXT(GL_EXT_texture_compression_s3tc);
+	CHECK_EXT(GL_EXT_texture_sRGB);
+#undef CHECK_EXT
+	int i;
+#define CAP_INT(X) glGetIntegerv(X, &i); std::cout << #X ": " << i << std::endl
+	// TODO: This list is incomplete
+	CAP_INT(GL_MAX_COLOR_TEXTURE_SAMPLES);
+	CAP_INT(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+	CAP_INT(GL_MAX_DEPTH_TEXTURE_SAMPLES);
+	CAP_INT(GL_MAX_ELEMENTS_INDICES);
+	CAP_INT(GL_MAX_ELEMENTS_VERTICES);
+	CAP_INT(GL_MAX_FRAGMENT_INPUT_COMPONENTS);
+	CAP_INT(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS);
+	if (GLAD_GL_VERSION_4_3) CAP_INT(GL_MAX_FRAMEBUFFER_SAMPLES);
+	CAP_INT(GL_MAX_RENDERBUFFER_SIZE);
+	CAP_INT(GL_MAX_TEXTURE_IMAGE_UNITS);
+	CAP_INT(GL_MAX_TEXTURE_SIZE);
+	CAP_INT(GL_MAX_UNIFORM_BUFFER_BINDINGS);
+	CAP_INT(GL_MAX_UNIFORM_BLOCK_SIZE);
+	CAP_INT(GL_MAX_VERTEX_ATTRIBS);
+	CAP_INT(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+	CAP_INT(GL_MAX_VERTEX_UNIFORM_COMPONENTS);
+	CAP_INT(GL_MAX_VERTEX_OUTPUT_COMPONENTS);
+	if (GLAD_GL_VERSION_4_3) CAP_INT(GL_MAX_VERTEX_ATTRIB_BINDINGS);
+#undef CAP_INT
+	float f;
+#define CAP_FLOAT(X) glGetFloatv(X, &f); std::cout << #X ": " << f << std::endl
+	if (GLAD_GL_ARB_texture_filter_anisotropic || GLAD_GL_EXT_texture_filter_anisotropic) CAP_FLOAT(GL_MAX_TEXTURE_MAX_ANISOTROPY);
+#undef CAP_FLOAT
+	
+	std::cout << "[GS] END GL CAPS" << std::endl;
+}
+
 bool MeshViewer::Init()
 {
 	// ## INIT GLFW (Window) ##
 
 	if (glfwInit() != GLFW_TRUE)
 	{
+		const char* description;
+		int code = glfwGetError(&description);
+		std::cout << "[GLFW] Error " << code << ": " << description << std::endl;
 		glfwTerminate();
 		std::cerr << "GLFW INIT FAIL!" << std::endl;
 		return false;
@@ -162,16 +270,20 @@ bool MeshViewer::Init()
 
 	std::cout << "[GS] Compiled with GLFW " << glfwGetVersionString() << std::endl;
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 	if (m_settings.USE_ANTIALIASING) glfwWindowHint(GLFW_SAMPLES, 4);
 
-	GLFWwindow* window = glfwCreateWindow(m_settings.WIND_WIDTH, m_settings.WIND_HEIGHT, "BBS Mesh Viewer", NULL, NULL);
+	//GLFWwindow* window = glfwCreateWindow(m_settings.WIND_WIDTH, m_settings.WIND_HEIGHT, "BBS Mesh Viewer", NULL, NULL);
+	GLFWwindow* window = MakeTheWindow(m_settings.WIND_WIDTH, m_settings.WIND_HEIGHT, "BBS Mesh Viewer");
 	m_window.window = window;
 	if (window == NULL)
 	{
+		const char* description;
+		int code = glfwGetError(&description);
+		std::cout << "[GLFW] Error " << code << ": " << description << std::endl;
 		std::cout << "[GS] Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return false;
@@ -192,14 +304,9 @@ bool MeshViewer::Init()
 		return false;
 	}
 
-	if (GLAD_GL_ARB_texture_filter_anisotropic)
-	{
-		std::cout << "[GS] Loaded extention GL_ARB_texture_filter_anisotropic!" << std::endl;
-		float max_anis;
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_anis);
-		std::cout << "[GS] Max anisotropic samples: " << max_anis << std::endl;
-	}
-
+	PrintGLCaps();
+	
+	// # configure window
 	// The window might not be the size we asked for.
 	glfwGetFramebufferSize(m_window.window, &m_window.width, &m_window.height);
 	glViewport(0, 0, m_window.width, m_window.height);
@@ -210,12 +317,15 @@ bool MeshViewer::Init()
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 
-	// get version info
+	// # get version info
+	const GLubyte* vendor = glGetString(GL_VENDOR);
 	const GLubyte* renderer = glGetString(GL_RENDERER);
 	const GLubyte* version = glGetString(GL_VERSION);
-	std::cout << "[GS] Renderer: " << renderer << std::endl;
-	std::cout << "[GS] OpenGL version: " << version << std::endl;
+	const GLubyte* sVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
+	std::cout << "[GS] Renderer: " << vendor << " " << renderer << std::endl;
+	std::cout << "[GS] OpenGL version: " << version << " (" << sVersion << ")" << std::endl;
 
+	// # set gl defaults
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	if (m_settings.USE_ANTIALIASING) glEnable(GL_MULTISAMPLE);
@@ -263,6 +373,9 @@ void MeshViewer::framebuffer_size_callback(GLFWwindow* window, int width, int he
 
 void MeshViewer::OnFramebufferSizeChanged(GLFWwindow* window, int width, int height)
 {
+	// TODO: Stop rendering when this happens
+	if (width == 0 && height == 0)
+		return;
 	m_window.height = height;
 	m_window.width = width;
 	glViewport(0, 0, width, height);	// TODO: This should be in frame start or something
@@ -399,7 +512,7 @@ void MeshViewer::Update(float deltaTime, double worldTime)
 
 void MeshViewer::Render()
 {
-		m_rootRenderContext->Render();
+	m_rootRenderContext->Render();
 }
 
 void MeshViewer::ScheduleDelayedProcess(DelayedFunc func)
