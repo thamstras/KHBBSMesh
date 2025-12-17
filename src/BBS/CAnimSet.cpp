@@ -15,7 +15,7 @@ CConstChannel::CConstChannel(float value)
 	theValue = value;
 }
 
-float CConstChannel::Evaluate(int frame)
+float CConstChannel::Evaluate(float frame)
 {
 	return theValue;
 }
@@ -30,14 +30,16 @@ Keyframe CConstChannel::GetKeyframe(int keyframeidx)
 	return keyframe;
 }
 
-CKeyframeChannel::CKeyframeChannel(std::vector<Keyframe> frames)
+CKeyframeChannel::CKeyframeChannel(std::vector<Keyframe> frames, bool isRot)
 {
 	this->keyframes = frames;
+	this->isRotation = isRot;
 }
 
-float CKeyframeChannel::Evaluate(int frame)
+float CKeyframeChannel::Evaluate(float frame)
 {
-	int keyIdx = FindPrevKey(frame);
+	//frame = (int)frame;
+	int keyIdx = FindPrevKey((int)frame);
 
 	// TODO: Bounds Check
 
@@ -46,10 +48,40 @@ float CKeyframeChannel::Evaluate(int frame)
 
 	if (prev.value == next.value) return prev.value;
 
-	int width = next.frameNumber - prev.frameNumber;
-	float frac = (frame - prev.frameNumber) / (float)width;
+	float width = (float)next.frameNumber - (float)prev.frameNumber;
+	float frac = (frame - (float)prev.frameNumber) / width;
 
-	return std::lerp(prev.value, next.value, frac);
+	if (isRotation)
+	{
+		float start = prev.value;
+		float end = next.value;
+		float move = end - start;
+		if ((glm::abs(move) > glm::pi<float>()))
+		{
+			if (move > 0)
+			{
+				end -= glm::two_pi<float>();
+			}
+			else
+			{
+				end += glm::two_pi<float>();
+			}
+			float val = std::lerp(start, end, frac);
+			if (val < -glm::pi<float>())
+				val += glm::two_pi<float>();
+			else if (val > glm::pi<float>())
+				val -= glm::two_pi<float>();
+			return val;
+		}
+		else
+		{
+			return std::lerp(start, end, frac);
+		}
+	}
+	else
+	{
+		return std::lerp(prev.value, next.value, frac);
+	}
 }
 
 int CKeyframeChannel::FindPrevKey(int frame)
@@ -79,9 +111,9 @@ CBoneAnim::CBoneAnim(PamBoneAnim& pamBone)
 	tx = MakeChannel(pamBone.translate_x);
 	ty = MakeChannel(pamBone.translate_y);
 	tz = MakeChannel(pamBone.translate_z);
-	rx = MakeChannel(pamBone.rotate_x);
-	ry = MakeChannel(pamBone.rotate_y);
-	rz = MakeChannel(pamBone.rotate_z);
+	rx = MakeChannel(pamBone.rotate_x, 0.0f, true);
+	ry = MakeChannel(pamBone.rotate_y, 0.0f, true);
+	rz = MakeChannel(pamBone.rotate_z, 0.0f, true);
 	sx = MakeChannel(pamBone.scale_x, 1.0f);
 	sy = MakeChannel(pamBone.scale_y, 1.0f);
 	sz = MakeChannel(pamBone.scale_z, 1.0f);
@@ -101,7 +133,7 @@ float DequantizeShort(uint16_t value, float min, float max)
 	return min + (range * factor);
 }
 
-std::unique_ptr<IAnimChannel> CBoneAnim::MakeChannel(std::optional<PamAnimChannel>& pamChannel, float defaultVal)
+std::unique_ptr<IAnimChannel> CBoneAnim::MakeChannel(std::optional<PamAnimChannel>& pamChannel, float defaultVal, bool isRot)
 {
 	if (!pamChannel.has_value()) return std::make_unique<CConstChannel>(defaultVal);
 
@@ -115,10 +147,10 @@ std::unique_ptr<IAnimChannel> CBoneAnim::MakeChannel(std::optional<PamAnimChanne
 		frame.value = DequantizeShort(pamKey.value, pamChannel->minVal, pamChannel->maxVal);
 		keyframes.push_back(frame);
 	}
-	return std::make_unique<CKeyframeChannel>(keyframes);
+	return std::make_unique<CKeyframeChannel>(keyframes, isRot);
 }
 
-BoneFrame CBoneAnim::Evaluate(int frame)
+BoneFrame CBoneAnim::Evaluate(float frame)
 {
 	glm::vec3 translate = glm::vec3(tx->Evaluate(frame), ty->Evaluate(frame), tz->Evaluate(frame));
 	glm::vec3 rotate = glm::vec3(rx->Evaluate(frame), ry->Evaluate(frame), rz->Evaluate(frame));
@@ -152,37 +184,37 @@ void CBBSAnim::CalcFrame()
 {
 	if (currTime < 0.0f) currTime = 0.0f;
 
-	float fFrame = currTime * frameRate;
+	currFTime = currTime * frameRate;
 
 	if (shouldLoop)
 	{
 		if (loopFrom > 0)
 		{
-			if (fFrame > (float)loopFrom)
+			if (currFTime > (float)loopFrom)
 			{
 				float loopLen = (float)loopFrom - loopTo;
-				fFrame -= loopLen;
+				currFTime -= loopLen;
 				currTime -= loopLen / frameRate;
 			}
 		}
 		else
 		{
 			// This anim probably isn't supposed to loop so we'll loop all of it
-			if (fFrame > (float)frameCount)
+			if (currFTime > (float)frameCount)
 			{
-				fFrame = 0.0f;
+				currFTime = 0.0f;
 				currTime = 0.0f;
 			}
 		}
 	}
 
-	if (fFrame > (float)frameCount)
+	if (currFTime > (float)frameCount)
 	{
-		fFrame = frameCount;
+		currFTime = frameCount;
 		currTime = (float)frameCount / frameRate;
 	}
 
-	currFrame = (int)floor(fFrame);
+	currFrame = (int)currFTime;
 }
 
 void CBBSAnim::Update(float animDeltaTime)
@@ -201,7 +233,7 @@ void CBBSAnim::SetTime(float time)
 BoneFrame CBBSAnim::GetBone(int boneIdx)
 {
 	if (boneIdx >= boneCount) return { glm::mat4(1.0f), glm::mat4(1.0f) };
-	return bones[boneIdx].Evaluate(currFrame);
+	return bones[boneIdx].Evaluate(currFTime);
 }
 
 CBBSAnimSet::CBBSAnimSet(PamFile& pamFile, CSkeleton skeleton) : skeleton(skeleton)

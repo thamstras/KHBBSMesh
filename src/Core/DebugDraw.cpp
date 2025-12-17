@@ -36,6 +36,23 @@ public:
 	virtual float CalcZ(const RenderContext& context) const override;
 };
 
+class CDebugAxis : public CDebugObject
+{
+protected:
+	static GLuint VBO;
+	static GLuint VAO;
+	friend class DebugDraw;
+public:
+	CDebugAxis(glm::mat4 trans, float scale);
+	virtual ~CDebugAxis();
+
+	glm::mat4 trans;
+	float scale;
+
+	virtual void DoDraw(RenderContext& context) override;
+	virtual float CalcZ(const RenderContext& context) const override;
+};
+
 class CDebugLineHelper
 {
 private:
@@ -56,6 +73,8 @@ std::vector<CDebugObject*> DebugDraw::activeDebugObjects;
 CDebugLineHelper* DebugDraw::debugLines = nullptr;
 GLuint CDebugCube::VBO = 0;
 GLuint CDebugCube::VAO = 0;
+GLuint CDebugAxis::VBO = 0;
+GLuint CDebugAxis::VAO = 0;
 
 void DebugDraw::DebugCube(RenderContext& context, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, glm::vec3 color)
 {
@@ -255,6 +274,11 @@ void DebugDraw::Teardown()
 	glDeleteBuffers(1, &CDebugCube::VBO);
 	CDebugCube::VAO = 0;
 	CDebugCube::VBO = 0;
+
+	glDeleteVertexArrays(1, &CDebugAxis::VAO);
+	glDeleteBuffers(1, &CDebugAxis::VBO);
+	CDebugAxis::VAO = 0;
+	CDebugAxis::VBO = 0;
 
 	if (debugLines != nullptr) delete debugLines;
 	debugLines = nullptr;

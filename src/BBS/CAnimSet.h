@@ -19,7 +19,7 @@ namespace BBS
 		IAnimChannel();
 		virtual ~IAnimChannel() = default;
 
-		virtual float Evaluate(int frame) = 0;
+		virtual float Evaluate(float frame) = 0;
 		virtual int KeyframeCount() = 0;
 		virtual Keyframe GetKeyframe(int keyframeIdx) = 0;
 
@@ -32,7 +32,7 @@ namespace BBS
 		CConstChannel(float value);
 		virtual ~CConstChannel() = default;
 
-		virtual float Evaluate(int frame) override;
+		virtual float Evaluate(float frame) override;
 		virtual int KeyframeCount() override;
 		virtual Keyframe GetKeyframe(int keyframeIdx) override;
 
@@ -45,14 +45,15 @@ namespace BBS
 	class CKeyframeChannel : public IAnimChannel
 	{
 	public:
-		CKeyframeChannel(std::vector<Keyframe> keyframes);
+		CKeyframeChannel(std::vector<Keyframe> keyframes, bool isRot);
 		virtual ~CKeyframeChannel() = default;
 
-		virtual float Evaluate(int frame) override;
+		virtual float Evaluate(float frame) override;
 		virtual int KeyframeCount() override;
 		virtual Keyframe GetKeyframe(int keyframeIdx) override;
 	private:
 		std::vector<Keyframe> keyframes;
+		bool isRotation;
 		int FindPrevKey(int frame);
 
 		friend class ::AssimpAnimExporter;
@@ -66,14 +67,14 @@ namespace BBS
 
 		CBoneAnim(CBoneAnim&& other) = default;
 
-		BoneFrame Evaluate(int frame);
+		BoneFrame Evaluate(float frame);
 
 	private:
 		std::unique_ptr<IAnimChannel> tx, ty, tz;
 		std::unique_ptr<IAnimChannel> rx, ry, rz;
 		std::unique_ptr<IAnimChannel> sx, sy, sz;
 
-		std::unique_ptr<IAnimChannel> MakeChannel(std::optional<PamAnimChannel>& channel, float defaultValue = 0.0f);
+		std::unique_ptr<IAnimChannel> MakeChannel(std::optional<PamAnimChannel>& channel, float defaultValue = 0.0f, bool isRot = false);
 
 		friend class ::AssimpAnimExporter;
 	};
@@ -95,7 +96,7 @@ namespace BBS
 
 		int frameRate, frameCount, loopFrom, loopTo, boneCount;
 		bool shouldLoop = true;
-		float currTime = 0.0f;
+		float currTime = 0.0f, currFTime = 0.0f;
 		int currFrame = 0;
 		std::vector<CBoneAnim> bones;
 

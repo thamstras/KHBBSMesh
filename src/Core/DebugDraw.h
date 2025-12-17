@@ -27,6 +27,7 @@ public:
 
 	static void DebugCube(RenderContext& context, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale, glm::vec3 color);
 	static void DebugLine(RenderContext& context, glm::vec3 start, glm::vec3 end, glm::vec3 color);
+	static void DebugAxis(RenderContext& context, glm::mat4 trans, float scale);
 
 	static void DrawLines(RenderContext& context);
 };
