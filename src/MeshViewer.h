@@ -69,7 +69,7 @@ namespace BBSMesh
 		std::vector<BBS::CTextureInfo*> m_textures;
 		BBS::CSkelModelObject* m_model = nullptr;
 		CGUIAnimationProvider* m_guiAnim = nullptr;
-		BBS::CBBSAnimSet* m_anims = nullptr;
+		BBS::CBBSAnimationProvider* m_anims = nullptr;
 		AnimType currAnim;
 
 		ArcLoader* m_arcLoader = nullptr;

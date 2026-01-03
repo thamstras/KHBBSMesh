@@ -6,6 +6,7 @@ struct BoneFrame
 {
 	glm::mat4 fullTransform;
 	glm::mat4 unscaledTransform;
+	glm::vec3 scale;
 };
 
 // Polymorphic base class

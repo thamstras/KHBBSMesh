@@ -21,7 +21,7 @@ public:
 
 	std::string mName;
 	std::vector<aiVertexWeight> mWeights;
-	glm::mat4 mOffsetMatrix;
+	glm::mat4 mOffsetMatrix = glm::mat4(1.0f);
 
 	aiBone* Finish();
 };
@@ -62,7 +62,7 @@ public:
 	aiNodeWrapper();
 
 	std::string mName;
-	glm::mat4 mTransformation;
+	glm::mat4 mTransformation = glm::mat4(1.0f);
 	aiNodeWrapper* mParent;
 	std::vector<aiNodeWrapper> mChildren;
 	std::vector<unsigned int> mMeshes;

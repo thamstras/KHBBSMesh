@@ -25,4 +25,6 @@ public:
 private:
 	CSkeleton skeleton;
 	std::vector<Transform> currTransforms;
+	void Reset();
+	bool gui_lockScale = false;
 };

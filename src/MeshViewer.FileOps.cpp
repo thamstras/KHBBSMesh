@@ -134,7 +134,7 @@ void MeshViewer::OpenAnimFile(std::string path, std::ifstream& fs)
 	// TODO: CHECK SKELETON
 
 	if (m_anims != nullptr) CloseAnimFile();
-	m_anims = new BBS::CBBSAnimSet(file, *m_model->skel);
+	m_anims = new BBS::CBBSAnimationProvider(file, *m_model->skel);
 	SetAnimType(AnimType::FileAnim);
 }
 

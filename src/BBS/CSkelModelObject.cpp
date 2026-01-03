@@ -294,10 +294,11 @@ void CSkelModelSection::LoadSection(PmoMesh& mesh, bool hasSkeleton)
 		switch (format.weights)
 		{
 		case 0: // none 
-			if (hasSkeleton)
-			{
+			// We need to set this anyway to not squish models with no skel down to a point because mul by 0.
+			//if (hasSkeleton)
+			//{
 				vert.weights[0] = 1.0f;
-			}
+			//}
 			break;
 		case 1: // uint8
 			for (int i = 0; i < 8; i++)

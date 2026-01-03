@@ -145,7 +145,7 @@ void MeshViewer::GUI_SideBar()
 		else
 		{
 			if (m_anims != nullptr)
-				m_anims->GUI_DrawControls();
+				m_anims->GUI_Controls();
 			else
 				ImGui::Text("Nothing loaded.");
 		}

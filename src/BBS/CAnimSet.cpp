@@ -1,242 +1,212 @@
 #include "CAnimSet.h"
-#include <cmath>
+#include <set>
+#include <functional>
+#include <algorithm>
 #include <format>
-#include "Core/Transform.h"
+
 
 using namespace BBS;
 
-IAnimChannel::IAnimChannel()
+float InterpVal(std::vector<Keyframe<float>> kfs, float t)
 {
+	if (kfs.size() == 1) return kfs[0].value;
 
+	int i = kfs.size() - 1;
+	for (; i > 0; i--)
+		if (kfs[i].time <= t) break;
+
+	if (i == kfs.size() - 1) return kfs[i].value;
+	
+	float t1 = kfs[i].time;
+	float t2 = kfs[i + 1].time;
+	return std::lerp(kfs[i].value, kfs[i + 1].value, (t - t1) / (t2 - t1));
 }
 
-CConstChannel::CConstChannel(float value)
+template <typename T>
+std::vector<Keyframe<T>> BuildChannel(std::vector<Keyframe<float>> x, std::vector<Keyframe<float>> y, std::vector<Keyframe<float>> z, std::function<T(float, float, float)> factory)
 {
-	theValue = value;
-}
+	std::vector<Keyframe<T>> keyList = std::vector<Keyframe<T>>();
 
-float CConstChannel::Evaluate(float frame)
-{
-	return theValue;
-}
+	// make an ordered set of all frameNumbers, then iterate through it.
+	std::set<float> targetFrames = std::set<float>();
+	for (auto& kf : x) targetFrames.insert(kf.time);
+	for (auto& kf : y) targetFrames.insert(kf.time);
+	for (auto& kf : z) targetFrames.insert(kf.time);
 
-int CConstChannel::KeyframeCount() { return 1; }
-
-Keyframe CConstChannel::GetKeyframe(int keyframeidx)
-{
-	Keyframe keyframe = Keyframe();
-	keyframe.frameNumber = 0;
-	keyframe.value = theValue;
-	return keyframe;
-}
-
-CKeyframeChannel::CKeyframeChannel(std::vector<Keyframe> frames, bool isRot)
-{
-	this->keyframes = frames;
-	this->isRotation = isRot;
-}
-
-float CKeyframeChannel::Evaluate(float frame)
-{
-	//frame = (int)frame;
-	int keyIdx = FindPrevKey((int)frame);
-
-	// TODO: Bounds Check
-
-	Keyframe& prev = keyframes[keyIdx];
-	Keyframe& next = keyframes[keyIdx + 1];
-
-	if (prev.value == next.value) return prev.value;
-
-	float width = (float)next.frameNumber - (float)prev.frameNumber;
-	float frac = (frame - (float)prev.frameNumber) / width;
-
-	if (isRotation)
+	for (float currFrame : targetFrames)
 	{
-		float start = prev.value;
-		float end = next.value;
-		float move = end - start;
-		if ((glm::abs(move) > glm::pi<float>()))
+		keyList.emplace_back(currFrame, factory(InterpVal(x, currFrame), InterpVal(y, currFrame), InterpVal(z, currFrame)));
+	}
+
+	return keyList;
+}
+
+
+VectorChannel::VectorChannel(std::vector<Keyframe<float>> x, std::vector<Keyframe<float>> y, std::vector<Keyframe<float>> z)
+{
+	keyframes = BuildChannel<glm::vec3>(x, y, z, [](float a, float b, float c) { return glm::vec3(a, b, c); });
+}
+
+glm::vec3 VectorChannel::Evaluate(float time)
+{
+	int previ = FindPrevKeyframeIdx(time);
+	Keyframe<glm::vec3> kf1 = keyframes[previ];
+	if (previ == keyframes.size() - 1) return kf1.value;
+	Keyframe<glm::vec3> kf2 = keyframes[previ + 1];
+	float w = kf2.time - kf1.time;
+	return glm::mix(kf1.value, kf2.value, (time - kf1.time) / w);
+}
+
+QuatChannel::QuatChannel(std::vector<Keyframe<float>> x, std::vector<Keyframe<float>> y, std::vector<Keyframe<float>> z)
+{
+	keyframes = BuildChannel<glm::quat>(x, y, z, [](float a, float b, float c) { return glm::quat(glm::vec3(a, b, c)); });
+}
+
+glm::quat QuatChannel::Evaluate(float time)
+{
+	int previ = FindPrevKeyframeIdx(time);
+	Keyframe<glm::quat> kf1 = keyframes[previ];
+	if (previ == keyframes.size() - 1) return kf1.value;
+	Keyframe<glm::quat> kf2 = keyframes[previ + 1];
+	float w = kf2.time - kf1.time;
+	return glm::slerp(kf1.value, kf2.value, (time - kf1.time) / w);
+}
+
+Keyframe<float> TransformKF(PamKeyframe kf, float min, float max)
+{
+	float dv;
+	if (kf.value == 0) dv = min;
+	else if (kf.value == UINT16_MAX) dv = max;
+	else
+	{
+		float range = max - min;
+		float factor = (float)kf.value / (float)UINT16_MAX;
+		dv = min + (range * factor);
+	}
+
+	return Keyframe<float>(kf.keyframeId, dv);
+}
+
+// TODO: Make this a free function so BoneChannel can be generic
+BoneChannel::BoneChannel(PamBoneAnim& pamBone)
+{
+	auto f = [](std::optional<PamAnimChannel> c, float d)
 		{
-			if (move > 0)
+			std::vector<Keyframe<float>> kfv{};
+			if (!c.has_value())
 			{
-				end -= glm::two_pi<float>();
+				kfv.emplace_back(0.0f, d);
 			}
 			else
 			{
-				end += glm::two_pi<float>();
+				//auto kff = std::bind(TransformKF, std::placeholders::_1, c->minVal, c->maxVal);
+				//std::ranges::transform(c->keyframes, std::back_inserter(kfv), kff);
+				
+				if (c->keyframeCount == 1)
+				{
+					kfv.push_back(Keyframe<float>(0.0f, c->minVal));
+				}
+				else
+				{
+					for (auto& k : c->keyframes)
+						kfv.push_back(TransformKF(k, c->minVal, c->maxVal));
+				}
 			}
-			float val = std::lerp(start, end, frac);
-			if (val < -glm::pi<float>())
-				val += glm::two_pi<float>();
-			else if (val > glm::pi<float>())
-				val -= glm::two_pi<float>();
-			return val;
-		}
-		else
-		{
-			return std::lerp(start, end, frac);
-		}
-	}
-	else
-	{
-		return std::lerp(prev.value, next.value, frac);
-	}
+			return kfv;
+		};
+
+	translate = std::make_unique<VectorChannel>(f(pamBone.translate_x, 0.0f), f(pamBone.translate_y, 0.0f), f(pamBone.translate_z, 0.0f));
+	rotate = std::make_unique<QuatChannel>(f(pamBone.rotate_x, 0.0f), f(pamBone.rotate_y, 0.0f), f(pamBone.rotate_z, 0.0f));
+	scale = std::make_unique<VectorChannel>(f(pamBone.scale_x, 1.0f), f(pamBone.scale_y, 1.0f), f(pamBone.scale_z, 1.0f));
 }
 
-int CKeyframeChannel::FindPrevKey(int frame)
+BoneFrame BoneChannel::Evaluate(float time) const
 {
-	for (int i = keyframes.size() - 2; i > 0; i--)
-	{
-		if (keyframes[i].frameNumber <= frame)
-		{
-			return i;
-		}
-	}
-	return 0;
+	glm::vec3 t = translate->Evaluate(time);
+	glm::quat r = rotate->Evaluate(time);
+	glm::vec3 s = scale->Evaluate(time);
+	glm::mat4 m = glm::translate(glm::mat4(1.0f), t);
+	m = glm::rotate(m, glm::angle(r), glm::axis(r));
+	glm::mat4 m2 = glm::scale(m, s);
+	return { m2, m, s };
 }
 
-int CKeyframeChannel::KeyframeCount()
+Transform BoneChannel::GetTransform(float time) const
 {
-	return keyframes.size();
+	glm::vec3 t = translate->Evaluate(time);
+	glm::quat r = rotate->Evaluate(time);
+	glm::vec3 s = scale->Evaluate(time);
+	return { t, glm::eulerAngles(r), s};
 }
 
-Keyframe CKeyframeChannel::GetKeyframe(int keyframeIdx)
+VectorChannel const* BoneChannel::GetRawTranslate() const
 {
-	return keyframes[keyframeIdx];
+	return translate.get();
 }
 
-CBoneAnim::CBoneAnim(PamBoneAnim& pamBone)
+QuatChannel const* BoneChannel::GetRawRotate() const
 {
-	tx = MakeChannel(pamBone.translate_x);
-	ty = MakeChannel(pamBone.translate_y);
-	tz = MakeChannel(pamBone.translate_z);
-	rx = MakeChannel(pamBone.rotate_x, 0.0f, true);
-	ry = MakeChannel(pamBone.rotate_y, 0.0f, true);
-	rz = MakeChannel(pamBone.rotate_z, 0.0f, true);
-	sx = MakeChannel(pamBone.scale_x, 1.0f);
-	sy = MakeChannel(pamBone.scale_y, 1.0f);
-	sz = MakeChannel(pamBone.scale_z, 1.0f);
+	return rotate.get();
 }
 
-float DequantizeShort(uint16_t value, float min, float max)
+VectorChannel const* BoneChannel::GetRawScale() const
 {
-	if (max < min) throw new std::invalid_argument("max must not be less than min");
-	if (isnan(max)) throw new std::domain_error("max must not be nan");
-	if (isnan(min)) throw new std::domain_error("min must not be nan");
-
-	if (value == 0) return min;
-	if (value == UINT16_MAX) return max;
-
-	float range = max - min;
-	float factor = (float)value / (float)UINT16_MAX;
-	return min + (range * factor);
+	return scale.get();
 }
 
-std::unique_ptr<IAnimChannel> CBoneAnim::MakeChannel(std::optional<PamAnimChannel>& pamChannel, float defaultVal, bool isRot)
+Anim::Anim(PamAnim& source)
 {
-	if (!pamChannel.has_value()) return std::make_unique<CConstChannel>(defaultVal);
-
-	if (pamChannel->keyframeCount == 1) return std::make_unique<CConstChannel>(pamChannel->minVal);
-
-	std::vector<Keyframe> keyframes = std::vector<Keyframe>();
-	for (auto& pamKey : pamChannel->keyframes)
-	{
-		Keyframe frame{};
-		frame.frameNumber = pamKey.keyframeId;
-		frame.value = DequantizeShort(pamKey.value, pamChannel->minVal, pamChannel->maxVal);
-		keyframes.push_back(frame);
-	}
-	return std::make_unique<CKeyframeChannel>(keyframes, isRot);
+	frameRate = source.frameRate;
+	frameCount = source.frameCount;
+	loopFrom = source.loopFromFrame;
+	loopTo = source.loopToFrame;
+	for (auto& b : source.boneAnims)
+		bones.emplace_back(b);
 }
 
-BoneFrame CBoneAnim::Evaluate(float frame)
+int Anim::BoneCount() const { return bones.size(); }
+
+int Anim::FrameRate() const { return frameRate; }
+
+int Anim::FrameCount() const { return frameCount; }
+
+int Anim::LoopFrom() const { return loopFrom; }
+
+int Anim::LoopTo() const { return loopTo; }
+
+void Anim::ModFrameRate(int newFrameRate)
 {
-	glm::vec3 translate = glm::vec3(tx->Evaluate(frame), ty->Evaluate(frame), tz->Evaluate(frame));
-	glm::vec3 rotate = glm::vec3(rx->Evaluate(frame), ry->Evaluate(frame), rz->Evaluate(frame));
-	glm::vec3 scale = glm::vec3(sx->Evaluate(frame), sy->Evaluate(frame), sz->Evaluate(frame));
-
-	//glm::quat rquat = glm::quat(rotate);
-
-	glm::mat4 t = glm::mat4(1.0f);
-	//t = glm::rotate(t, glm::angle(rquat), glm::axis(rquat));
-	t = glm::translate(t, translate);
-	t = glm::rotate(t, rotate.z, glm::vec3(0.0f, 0.0f, 1.0f));
-	t = glm::rotate(t, rotate.y, glm::vec3(0.0f, 1.0f, 0.0f));
-	t = glm::rotate(t, rotate.x, glm::vec3(1.0f, 0.0f, 0.0f));
-	t = glm::scale(t, scale);
-
-	return { t, t };
+	frameRate = newFrameRate;
 }
 
-CBBSAnim::CBBSAnim(PamAnim& pamAnim)
+void Anim::ModLoopFrom(int newLoopFrom)
 {
-	frameRate = pamAnim.frameRate;
-	frameCount = pamAnim.frameCount;
-	loopFrom = pamAnim.loopFromFrame;
-	loopTo = pamAnim.loopToFrame;
-	boneCount = pamAnim.boneCount;
-	for (auto& bone : pamAnim.boneAnims)
-		bones.emplace_back(bone);	// Calls CBoneAnim in place!
+	int frameCount = FrameCount();
+	newLoopFrom = std::clamp(newLoopFrom, 0, frameCount);
+	loopFrom = newLoopFrom;
 }
 
-void CBBSAnim::CalcFrame()
+void Anim::ModLoopTo(int newLoopTo)
 {
-	if (currTime < 0.0f) currTime = 0.0f;
-
-	currFTime = currTime * frameRate;
-
-	if (shouldLoop)
-	{
-		if (loopFrom > 0)
-		{
-			if (currFTime > (float)loopFrom)
-			{
-				float loopLen = (float)loopFrom - loopTo;
-				currFTime -= loopLen;
-				currTime -= loopLen / frameRate;
-			}
-		}
-		else
-		{
-			// This anim probably isn't supposed to loop so we'll loop all of it
-			if (currFTime > (float)frameCount)
-			{
-				currFTime = 0.0f;
-				currTime = 0.0f;
-			}
-		}
-	}
-
-	if (currFTime > (float)frameCount)
-	{
-		currFTime = frameCount;
-		currTime = (float)frameCount / frameRate;
-	}
-
-	currFrame = (int)currFTime;
+	int frameCount = FrameCount();
+	newLoopTo = std::clamp(newLoopTo, 0, frameCount);
+	loopFrom = newLoopTo;
 }
 
-void CBBSAnim::Update(float animDeltaTime)
+BoneFrame Anim::GetBone(float fTime, int boneIdx)
 {
-	currTime += animDeltaTime;
+	if (boneIdx < 0 || boneIdx >= BoneCount())
+		return {};	// TODO: Check if this is 0 or identity
 
-	CalcFrame();
+	return bones[boneIdx].Evaluate(fTime);
 }
 
-void CBBSAnim::SetTime(float time)
+BoneChannel const* Anim::GetRaw(int boneIdx) const
 {
-	currTime = time;
-	CalcFrame();
+	return &bones[boneIdx];
 }
 
-BoneFrame CBBSAnim::GetBone(int boneIdx)
-{
-	if (boneIdx >= boneCount) return { glm::mat4(1.0f), glm::mat4(1.0f) };
-	return bones[boneIdx].Evaluate(currFTime);
-}
-
-CBBSAnimSet::CBBSAnimSet(PamFile& pamFile, CSkeleton skeleton) : skeleton(skeleton)
+CBBSAnimationProvider::CBBSAnimationProvider(PamFile& pamFile, CSkeleton skeleton) : skeleton(skeleton)
 {
 	for (auto& anim : pamFile.contents)
 	{
@@ -244,134 +214,163 @@ CBBSAnimSet::CBBSAnimSet(PamFile& pamFile, CSkeleton skeleton) : skeleton(skelet
 		info.name = std::string(anim.name, 12);
 		if (anim.data.has_value())
 		{
-			info.idx = anims.size();
+			info.storeIdx = anims.size();
 			anims.emplace_back(anim.data.value());
-		}
-		else
-		{
-			info.idx = -1;
 		}
 		animInfos.push_back(info);
 	}
+	SelectAnim(0);
+	SetPlayRate(1.0f);
+	SetPlaying(false);
 }
 
-CBBSAnimSet::~CBBSAnimSet() {}
+CBBSAnimationProvider::~CBBSAnimationProvider() {}
 
-int CBBSAnimSet::BoneCount()
+int CBBSAnimationProvider::BoneCount()
 {
 	AnimInfo& currAnim = animInfos[selectedIdx];
-	if (currAnim.idx != -1)
-		return anims[currAnim.idx].boneCount;
+	if (currAnim.storeIdx != -1)
+		return anims[currAnim.storeIdx].BoneCount();
 	return 0;
 }
 
-void CBBSAnimSet::Update(float deltaTime, double worldTime)
+void CBBSAnimationProvider::Update(float deltaTime, double worldTime)
 {
-	if (isPlaying)
+	if (isPlaying && selectedAnim != nullptr)
 	{
-		currAnimTime += deltaTime * timescale;
-		AnimInfo& currAnim = animInfos[selectedIdx];
-		if (currAnim.idx != -1)
-			anims[currAnim.idx].Update(deltaTime * timescale);
+		currTime += deltaTime * playbackRate;
+		CalcFrame();
 	}
 }
 
-BoneFrame CBBSAnimSet::GetBone(int idx)
+BoneFrame CBBSAnimationProvider::GetBone(int idx)
 {
-	AnimInfo& currAnim = animInfos[selectedIdx];
 	BoneFrame boneTransform = { skeleton.bones[idx].transform, skeleton.bones[idx].transform };
-	if (currAnim.idx != -1)
-		boneTransform = anims[currAnim.idx].GetBone(idx);
+	if (selectedAnim != nullptr)
+		boneTransform = selectedAnim->GetBone(currFrame, idx);
 
 	return boneTransform;
 }
 
-void CBBSAnimSet::SetAnimTime(float time)
+void CBBSAnimationProvider::SetAnimTime(float time)
 {
-	currAnimTime = time;
-	AnimInfo& currAnim = animInfos[selectedIdx];
-	if (currAnim.idx != -1)
-		anims[currAnim.idx].SetTime(currAnimTime);
+	currTime = std::max(time, 0.0f);
+	CalcFrame();
 }
 
-void CBBSAnimSet::SetPlayRate(float rate)
+void CBBSAnimationProvider::SetPlayRate(float rate)
 {
-	timescale = rate;
+	playbackRate = std::clamp(rate, 0.0001f, 1000.0f);
 }
 
-void CBBSAnimSet::SetPlaying(bool isPlaying)
+void CBBSAnimationProvider::SetPlaying(bool isPlaying)
 {
 	this->isPlaying = isPlaying;
 }
 
-bool CBBSAnimSet::NeedsScaleHack()
+bool CBBSAnimationProvider::NeedsScaleHack() { return true; }
+
+int CBBSAnimationProvider::AnimCount() const { return animInfos.size(); }
+
+void CBBSAnimationProvider::SelectAnim(int idx)
 {
-	return true;
+	selectedIdx = std::clamp(idx, 0, AnimCount());
+	if (animInfos[selectedIdx].storeIdx >= 0)
+		selectedAnim = &anims[animInfos[selectedIdx].storeIdx];
+	else
+		selectedAnim = nullptr;
+	SetAnimTime(0.0f);
 }
 
-int CBBSAnimSet::AnimCount()
+std::string CBBSAnimationProvider::GetCurrAnimName() const { return animInfos[selectedIdx].name; }
+
+Anim const* CBBSAnimationProvider::GetCurrAnim() const { return selectedAnim; };
+
+void CBBSAnimationProvider::SetAnimFrame(float frame)
 {
-	return animInfos.size();
+	if (selectedAnim == nullptr) return;
+
+	int frameRate = selectedAnim->FrameRate();
+	float time = frame / (float)frameRate;
+	SetAnimTime(time);
 }
 
-void CBBSAnimSet::SelectAnim(int idx)
+void CBBSAnimationProvider::CalcFrame()
 {
-	selectedIdx = idx;
+	if (selectedAnim == nullptr) return;
+
+	if (currTime < 0.0f) currTime = 0.0f;
+	currFrame = currTime * (float)selectedAnim->FrameRate();
+
+	if (shouldLoop)
+	{
+		int lf = selectedAnim->LoopFrom();
+		// if no loopFrom loop whole anim
+		if (lf == 0) lf = selectedAnim->FrameCount();
+		if (currFrame >= (float)lf)
+		{
+			float loopLen = (float)(lf - selectedAnim->LoopTo());
+			currFrame -= loopLen;
+			currTime -= loopLen / selectedAnim->FrameRate();
+		}
+	}
+
+	if (currFrame > (float)selectedAnim->FrameCount())
+	{
+		currFrame = selectedAnim->FrameCount();
+		currTime = (float)selectedAnim->FrameCount() / selectedAnim->FrameRate();
+	}
 }
 
-void CBBSAnimSet::GUI_DrawControls()
+void CBBSAnimationProvider::GUI_Controls()
 {
 	ImGui::Text("Playback Controls");
-	//ImGui::SetNextItemWidth(0.4f);
-	float t = this->currAnimTime;
+	float t = currTime;
 	if (ImGui::InputFloat("Play Time", &t))
 		SetAnimTime(t);
-	//ImGui::SameLine();
-	//ImGui::SetNextItemWidth(0.4f);
-	t = this->timescale;
+	t = this->playbackRate;
 	if (ImGui::InputFloat("Play Rate", &t))
 		SetPlayRate(t);
 	bool play = this->isPlaying;
 	if (ImGui::Checkbox("Play", &play))
 		SetPlaying(play);
 	ImGui::Separator();
-	
-	
-	if(ImGui::BeginCombo("Curr Anim", animInfos[selectedIdx].name.c_str()))
+
+
+	if (ImGui::BeginCombo("Curr Anim", animInfos[selectedIdx].name.c_str()))
 	{
 		for (int i = 0; i < animInfos.size(); i++)
 		{
-			auto label = std::format("{} : {}", i, animInfos[i].idx != -1 ? animInfos[i].name.c_str() : "NO ANIM");
+			auto label = std::format("{} : {}", i, animInfos[i].storeIdx >= 0 ? animInfos[i].name.c_str() : "NO ANIM");
 			if (ImGui::Selectable(label.c_str(), selectedIdx == i))
 				SelectAnim(i);
 		}
 		ImGui::EndCombo();
 	}
 
-	if (animInfos[selectedIdx].idx == -1)
+	if (selectedAnim == nullptr)
 	{
 		ImGui::Text("No Anim in this slot!");
 	}
 	else
 	{
-		CBBSAnim& anim = anims[animInfos[selectedIdx].idx];
-		ImGui::Text("Anim Time %f", anim.currTime);
-		ImGui::Text("Fame Rate %d", anim.frameRate);
-		ImGui::Text("Curr Frame %d", anim.currFrame);
-		ImGui::Text("Frame Count %d", anim.frameCount);
-		ImGui::Text("Loop From %d", anim.loopFrom);
-		ImGui::Text("Loop To %d", anim.loopTo);
-		ImGui::Text("Bone Count %d", anim.boneCount);
-		ImGui::Checkbox("Loop?", &anim.shouldLoop);
+		ImGui::Text("Anim Time %f", currTime);
+		ImGui::Text("Fame Rate %d", selectedAnim->FrameRate());
+		ImGui::Text("Curr Frame %d", (int)currFrame);
+		ImGui::Text("Frame Count %d", selectedAnim->FrameCount());
+		ImGui::Text("Loop From %d", selectedAnim->LoopFrom());
+		ImGui::Text("Loop To %d", selectedAnim->LoopTo());
+		ImGui::Text("Bone Count %d", selectedAnim->BoneCount());
+		ImGui::Checkbox("Loop?", &shouldLoop);
 		ImGui::Separator();
 		if (ImGui::Button("Prev Frame"))
 		{
-			SetAnimTime((anim.currFrame - 1) / (float)anim.frameRate);
+			SetAnimFrame(currFrame - 1);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Next Frame"))
 		{
-			SetAnimTime((anim.currFrame + 1) / (float)anim.frameRate);
+			SetAnimFrame(currFrame + 1);
 		}
 		ImGui::Checkbox("Show Pose?", &gui_showPose);
 		if (gui_showPose)
@@ -381,7 +380,7 @@ void CBBSAnimSet::GUI_DrawControls()
 			for (int i = 0; i < bcount; i++)
 			{
 				CBone& bone = skeleton.bones[i];
-				Transform t = Transform::Decompose(GetBone(i).fullTransform);
+				Transform t = selectedAnim->GetRaw(i)->GetTransform(currFrame);
 				ImGui::PushID(i);
 				ImGui::Text("Bone: %s", bone.name.c_str());
 				ImGui::DragFloat3("Position", glm::value_ptr(t.position), 0.1f);

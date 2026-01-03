@@ -1,124 +1,130 @@
 #pragma once
 #include "Common.h"
 #include "Core/CAnimationDriver.h"
+#include "Core/Transform.h"
 #include "FileTypes/BbsPam.h"
 
 class AssimpAnimExporter;
 
 namespace BBS
 {
+	template <typename T>
 	struct Keyframe
 	{
-		int frameNumber;
-		float value;
+		float time;
+		T value;
+
+		Keyframe(float t, T v) : time(t), value(v) {}
 	};
 
-	class IAnimChannel
+	template <typename T>
+	class KeyChannel
 	{
 	public:
-		IAnimChannel();
-		virtual ~IAnimChannel() = default;
+		KeyChannel() = default;
+		virtual ~KeyChannel() = default;
 
-		virtual float Evaluate(float frame) = 0;
-		virtual int KeyframeCount() = 0;
-		virtual Keyframe GetKeyframe(int keyframeIdx) = 0;
+		virtual T Evaluate(float time) = 0;
 
-		friend class ::AssimpAnimExporter;
+		int KeyframeCount() const
+		{
+			return keyframes.size();
+		}
+
+		Keyframe<T> GetKeyframe(int idx) const
+		{
+			return keyframes[idx];
+		}
+
+	protected:
+		std::vector<Keyframe<T>> keyframes;
+		int FindPrevKeyframeIdx(float t) const
+		{
+			for (int i = keyframes.size() - 2; i > 0; i--)
+			{
+				if (keyframes[i].time <= t)
+				{
+					return i;
+				}
+			}
+			return 0;
+		}
 	};
 
-	class CConstChannel : public IAnimChannel
+	class VectorChannel : public KeyChannel<glm::vec3>
 	{
 	public:
-		CConstChannel(float value);
-		virtual ~CConstChannel() = default;
+		VectorChannel(std::vector<Keyframe<float>> x, std::vector<Keyframe<float>> y, std::vector<Keyframe<float>> z);
+		virtual ~VectorChannel() = default;
 
-		virtual float Evaluate(float frame) override;
-		virtual int KeyframeCount() override;
-		virtual Keyframe GetKeyframe(int keyframeIdx) override;
+		glm::vec3 Evaluate(float time) override;
 
+	};
+
+	class QuatChannel : public KeyChannel<glm::quat>
+	{
+	public:
+		QuatChannel(std::vector<Keyframe<float>> x, std::vector<Keyframe<float>> y, std::vector<Keyframe<float>> z);
+		virtual ~QuatChannel() = default;
+
+		glm::quat Evaluate(float time) override;
+	};
+
+	class BoneChannel
+	{
+	public:
+		BoneChannel(PamBoneAnim& pamBone);
+		~BoneChannel() = default;
+		BoneChannel(BoneChannel&& other) = default;
+
+		BoneFrame Evaluate(float time) const;
+		Transform GetTransform(float time) const;
+
+		VectorChannel const* GetRawTranslate() const;
+		QuatChannel const* GetRawRotate() const;
+		VectorChannel const* GetRawScale() const;
 	private:
-		float theValue;
-
-		friend class ::AssimpAnimExporter;
+		std::unique_ptr<VectorChannel> translate;
+		std::unique_ptr<QuatChannel> rotate;
+		std::unique_ptr<VectorChannel> scale;
 	};
 
-	class CKeyframeChannel : public IAnimChannel
+	class Anim
 	{
 	public:
-		CKeyframeChannel(std::vector<Keyframe> keyframes, bool isRot);
-		virtual ~CKeyframeChannel() = default;
+		Anim(PamAnim& pamAnim);
+		~Anim() = default;
+		Anim(Anim&& other) = default;
 
-		virtual float Evaluate(float frame) override;
-		virtual int KeyframeCount() override;
-		virtual Keyframe GetKeyframe(int keyframeIdx) override;
-	private:
-		std::vector<Keyframe> keyframes;
-		bool isRotation;
-		int FindPrevKey(int frame);
-
-		friend class ::AssimpAnimExporter;
-	};
-
-	class CBoneAnim
-	{
-	public:
-		CBoneAnim(PamBoneAnim& pamBone);
-		~CBoneAnim() = default;
-
-		CBoneAnim(CBoneAnim&& other) = default;
-
-		BoneFrame Evaluate(float frame);
-
-	private:
-		std::unique_ptr<IAnimChannel> tx, ty, tz;
-		std::unique_ptr<IAnimChannel> rx, ry, rz;
-		std::unique_ptr<IAnimChannel> sx, sy, sz;
-
-		std::unique_ptr<IAnimChannel> MakeChannel(std::optional<PamAnimChannel>& channel, float defaultValue = 0.0f, bool isRot = false);
-
-		friend class ::AssimpAnimExporter;
-	};
-
-	class CBBSAnim
-	{
-	public:
-		CBBSAnim(PamAnim& pamAnim);
-		~CBBSAnim() = default;
-
-		CBBSAnim(CBBSAnim&& other) = default;
+		int BoneCount() const;
+		int FrameRate() const;
+		int FrameCount() const;
+		int LoopFrom() const;
+		int LoopTo() const;
 		
-		void Update(float animTime);
-		void SetTime(float time);
-		BoneFrame GetBone(int boneIdx);
+		void ModFrameRate(int newFrameRate);
+		void ModLoopFrom(int newLoopFrom);
+		void ModLoopTo(int newLoopTo);
+		
+		BoneFrame GetBone(float fTime, int boneIdx);
+		BoneChannel const* GetRaw(int boneIdx) const;
 
 	private:
-		void CalcFrame();
-
-		int frameRate, frameCount, loopFrom, loopTo, boneCount;
-		bool shouldLoop = true;
-		float currTime = 0.0f, currFTime = 0.0f;
-		int currFrame = 0;
-		std::vector<CBoneAnim> bones;
-
-		friend class CBBSAnimSet;
-		friend class ::AssimpAnimExporter;
+		int frameRate, frameCount, loopFrom, loopTo;
+		std::vector<BoneChannel> bones;
 	};
 
-	/* NOTE: In an actual engine AnimSet would just be storage and we'd plug the anims straight into 
-			 some kind of specialized AnimationDriver and let it handle anim selection/blending etc.
-			 But this is just a simple anim viewer so we'll hide away anim selection here.
-	*/
-	class CBBSAnimSet : public CAnimationProvider
+	class CBBSAnimationProvider : public CAnimationProvider
 	{
 		struct AnimInfo
 		{
 			std::string name;
-			int idx;
+			int storeIdx = -1;
 		};
 
 	public:
-		CBBSAnimSet(PamFile& pamFile, CSkeleton skel);
-		~CBBSAnimSet();
+		CBBSAnimationProvider(PamFile& file, CSkeleton skel);
+		virtual ~CBBSAnimationProvider();
 
 		virtual int BoneCount() override;
 		virtual void Update(float deltaTime, double worldTime) override;
@@ -128,23 +134,27 @@ namespace BBS
 		virtual void SetPlayRate(float rate) override;
 		virtual void SetPlaying(bool isPlaying) override;
 		virtual bool NeedsScaleHack() override;
-
-		int AnimCount();
+		
+		int AnimCount() const;
 		void SelectAnim(int idx);
+		std::string GetCurrAnimName() const;
+		Anim const* GetCurrAnim() const;
 
-		// TODO: GUI Interface!!!
-		void GUI_DrawControls();
+		void SetAnimFrame(float frame);
 
+		void GUI_Controls();
+	
 	private:
-		float timescale = 1.0f;
-		float currAnimTime = 0.0f;
-		bool isPlaying = false;
+		float currTime = 0.0f, currFrame = 0.0f, playbackRate = 1.0f;
+		bool isPlaying = false, shouldLoop = false;
+		void CalcFrame();
+
 		int selectedIdx = 0;
-		std::vector<CBBSAnim> anims;
+		Anim* selectedAnim = nullptr;
 		std::vector<AnimInfo> animInfos;
+		std::vector<Anim> anims;
+
 		CSkeleton skeleton;
 		bool gui_showPose = false;
-
-		friend class ::AssimpAnimExporter;
 	};
 }

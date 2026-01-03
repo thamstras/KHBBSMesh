@@ -1,4 +1,5 @@
 #include "CAnimationDriver.h"
+#include "glm/gtx/orthonormalize.hpp"
 
 CAnimationDriver::CAnimationDriver(std::vector<AnimBone> bones)
 {
@@ -42,18 +43,13 @@ void CAnimationDriver::Update(float deltaTime, double worldTime)
 	if (m_currentAnim == nullptr)
 		return;
 
-	// TODO: Do we call this, or is whoever owns the animation provider responsible?
-	//       If we're responsible, we'll need stop/start/reset functions
-	// UPDATE: It'll have to be whatever owns the animation provider.
-	//m_currentAnim->Update(deltaTime, worldTime);
-
 	for (auto& bone : m_bones)
 	{
 		// TODO: I'm not convinced by the ordering of these transform multiplications...
 		BoneFrame frameTransform = m_currentAnim->GetBone(bone.idx);
 		glm::mat4 parentTransform = (bone.parentIdx == -1) ? glm::mat4(1.0f) : m_bones[bone.parentIdx].transform;
 		
-		if (m_currentAnim->NeedsScaleHack())
+		/*if (m_currentAnim->NeedsScaleHack())
 		{
 			glm::vec4 scale;
 			for (int i = 0; i < 3; i++) scale[i] = glm::length(glm::vec3(parentTransform[i]));
@@ -64,36 +60,34 @@ void CAnimationDriver::Update(float deltaTime, double worldTime)
 				parentTransform[2] / scale[2],
 				parentTransform[3] / scale[3]
 			);
-		}
+		}*/
 
 		glm::mat4 globalTransform = parentTransform * frameTransform.fullTransform;
-		glm::mat4 vertTransform = globalTransform * bone.inverseTransform;
 
 		//if (m_currentAnim->NeedsScaleHack())
 		//	bone.transform = parentTransform * frameTransform.unscaledTransform;
 		//else
 		//	bone.transform = parentTransform * frameTransform.fullTransform;
-		
 		bone.transform = globalTransform;
+		
+		if (m_currentAnim->NeedsScaleHack())
+		{
+			glm::mat3 m = glm::mat3(globalTransform);
+			m = glm::orthonormalize(m);
+			globalTransform = glm::mat4(
+				glm::vec4(m[0], globalTransform[0][3]),
+				glm::vec4(m[1], globalTransform[1][3]),
+				glm::vec4(m[2], globalTransform[2][3]),
+				globalTransform[3]
+			);
+			globalTransform = glm::scale(globalTransform, frameTransform.scale);
+		}
+
+		glm::mat4 vertTransform = globalTransform * bone.inverseTransform;
 		m_finalTransforms[bone.idx] = vertTransform;
 
-		/* OLD
-		// Don't know if anim transform will be delta from last frame or delta from bind pose.
-		// # IF (delta from last frame)
-		bone.transform = frameTransform * bone.transform;
-
-		// # IF (delta from bind pose)
-		bone.transform = frameTransform * m_bindPose[bone.idx];
-
-		if (bone.parentIdx == -1)
-			m_accumulatedTransforms[bone.idx] = bone.transform;
-		else
-			m_accumulatedTransforms[bone.idx] = bone.transform * m_accumulatedTransforms[bone.parentIdx];
-		*/
 	}
 
-	// Then m_accumulatedTransforms gets passed to the mesh renderer to transform the actual verts
-	// I THINK. I COULD BE WRONG. We'll see once I write CSkelMesh
 }
 
 void CAnimationDriver::ResetPose()
