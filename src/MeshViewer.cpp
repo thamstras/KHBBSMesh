@@ -540,6 +540,12 @@ void MeshViewer::DrawSkeleton()
 			auto bonePos = glm::vec3(pose[bone.idx].transform[3]);
 			auto parentPos = glm::vec3(pose[bone.parentIdx].transform[3]);
 			DebugDraw::DebugLine(*m_rootRenderContext, parentPos, bonePos, glm::vec3(1.0f, 0.0f, 0.0f));
+			if (drawJoints)
+			{
+				DebugDraw::DebugLine(*m_rootRenderContext, bonePos, bonePos + glm::vec3(pose[bone.idx].transform * glm::vec4(jointSize, 0.0f, 0.0f, 0.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
+				DebugDraw::DebugLine(*m_rootRenderContext, bonePos, bonePos + glm::vec3(pose[bone.idx].transform * glm::vec4(0.0f, jointSize, 0.0f, 0.0f)), glm::vec3(0.0f, 1.0f, 1.0f));
+				DebugDraw::DebugLine(*m_rootRenderContext, bonePos, bonePos + glm::vec3(pose[bone.idx].transform * glm::vec4(0.0f, 0.0f, jointSize, 0.0f)), glm::vec3(0.0f, 0.0f, 1.0f));
+			}
 		}
 	}
 }

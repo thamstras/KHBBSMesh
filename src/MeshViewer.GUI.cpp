@@ -124,6 +124,15 @@ void MeshViewer::GUI_SideBar()
 	if (ImGui::Begin("Skeleton"))
 	{
 		ImGui::Checkbox("Draw Skeleton", &this->drawSkel);
+		if (drawSkel)
+		{
+			ImGui::SameLine();
+			ImGui::Checkbox("Draw Joints", &this->drawJoints);
+			if (drawJoints)
+			{
+				ImGui::DragFloat("Joint Scale", &this->jointSize, 0.01f, 0.0f, 1.0f);
+			}
+		}
 		ImGui::Separator();
 
 		if (ImGui::BeginCombo("Anim Mode", currAnim == AnimType::GuiAnim ? "Manual" : "Anim File"))

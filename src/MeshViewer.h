@@ -75,6 +75,8 @@ namespace BBSMesh
 		ArcLoader* m_arcLoader = nullptr;
 
 		bool drawSkel = false;
+		bool drawJoints = false;
+		float jointSize = 0.25f;
 		bool showCamWindow = false;
 
 		std::string modelName;
