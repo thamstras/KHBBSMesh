@@ -245,7 +245,7 @@ void CBBSAnimationProvider::Update(float deltaTime, double worldTime)
 
 BoneFrame CBBSAnimationProvider::GetBone(int idx)
 {
-	BoneFrame boneTransform = { skeleton.bones[idx].transform, skeleton.bones[idx].transform };
+	BoneFrame boneTransform = { skeleton.bones[idx].transform, skeleton.bones[idx].transform, glm::vec3(1.0f) };
 	if (selectedAnim != nullptr)
 		boneTransform = selectedAnim->GetBone(currFrame, idx);
 
