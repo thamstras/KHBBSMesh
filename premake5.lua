@@ -1,11 +1,12 @@
 
 -- NOTE: Requires at least Premake5 beta 1 for ccpdialect and vs2022 support.
 
- -- NOTE: I built ASSIMP from source. If you're using a binary distribution you may need to change some paths down below as well as these ones.
+ -- NOTES: I built ASSIMP from source. If you're using a binary distribution you may need to change some paths down below as well as these ones.
+ --        I modified my glm folder to be ./include/glm rather than ./glm to keep my #include autocomplete a little cleaner
 GLFW_PATH = "C:/Repos/Libraries/glfw/glfw-3.4.bin.WIN32/"
 GLM_PATH = "C:/Repos/Libraries/glm/1.0.1/"
 GLI_PATH = "C:/Repos/Libraries/gli/0.8.2.0/"
-ASSIMP_PATH = "C:/Repos/Libraries/assimp/assimp-master/"
+ASSIMP_PATH = "C:/Repos/Libraries/assimp/assimp-fork/"
 
 
 workspace "KHBBSMesh" 
@@ -45,7 +46,6 @@ workspace "KHBBSMesh"
 		filter({})
 		
 		-- GLM
-        -- I modified my glm folder to be ./include/glm rather than ./glm to keep my #include autocomplete a little cleaner
 		includedirs(GLM_PATH .. "include")
 		files { GLM_PATH .. "util/glm.natvis" }
 

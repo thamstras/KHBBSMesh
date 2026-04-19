@@ -255,7 +255,7 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	scene.mRootNode = root;
 	root->mName.Set(modelName);
 
-	if (model->skel != nullptr)
+	if (model->skel != nullptr && model->skel->bones.size() > 0)
 	{
 		aiNode* tree = Export(*model->skel);
 		root->addChildren(1, &tree);
