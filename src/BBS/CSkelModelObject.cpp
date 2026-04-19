@@ -152,6 +152,8 @@ CSkelModelSection::CSkelModelSection()
 	primativeType = GL_TRIANGLES;
 	attributes = 0;
 	globalColor = 0xFF808080;
+	boneIdxs = { 255, 255, 255, 255, 255, 255, 255, 255 };
+	group = 0;
 }
 
 static float ReadUInt8(uint8_t* data, uint8_t& readPtr)

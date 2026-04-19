@@ -121,6 +121,14 @@ void MeshViewer::GUI_MenuBar()
 
 void MeshViewer::GUI_SideBar()
 {
+	if (ImGui::Begin("Options"))
+	{
+		ImGui::Checkbox("Wireframe", &this->m_rootRenderContext->render.wireframe);
+		ImGui::Checkbox("Disable Blending", &this->m_rootRenderContext->render.no_blend);
+		ImGui::Checkbox("Disable Textures", &this->m_rootRenderContext->render.no_texture);
+	};
+	ImGui::End();
+
 	if (ImGui::Begin("Skeleton"))
 	{
 		ImGui::Checkbox("Draw Skeleton", &this->drawSkel);

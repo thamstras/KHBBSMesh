@@ -106,7 +106,7 @@ void AddSection(aiMeshWrapper& mesh, BBS::CSkelModelSection& section, BBS::CSkel
 	{
 		BBS::SkelVert& vert = section.vertexData[vi];
 		mesh.mVertices.push_back(Glm2Assimp::Vector3(vert.pos * obj.scale));
-		mesh.mColors.push_back(Glm2Assimp::Color(vert.color));
+		mesh.mColors.push_back(Glm2Assimp::Color(vert.color * glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)));
 		mesh.mTextureCoords.push_back(Glm2Assimp::Vector3(glm::vec3(vert.tex, 0.0f)));
 		for (int i = 0; i < 8; i++)
 		{
@@ -285,6 +285,8 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 		aiMaterial* mat = new aiMaterial();
 		mat->AddProperty(&aiName, AI_MATKEY_NAME);
 		mat->AddProperty(&filename, AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0));
+		int i = aiShadingMode_Unlit;
+		mat->AddProperty(&i, 1, AI_MATKEY_SHADING_MODEL);
 		scene.mMaterials.push_back(mat);
 
 		// Step 2: Write out texture
@@ -334,8 +336,9 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	finalScene->mMetaData->Add("UnitScaleFactor", 100.0);
 	finalScene->mMetaData->Add("TimeMode", 14);	// Custom frame rate (30fps is 6, 24fps is 11)
 	finalScene->mMetaData->Add("CustomFrameRate", 30.0);
+	finalScene->mMetaData->Add("InheritMode", 2); // Disable scale inheritance
 
-	if (AI_SUCCESS != exp.Export(finalScene, format.id, outFile.string(), aiPostProcessSteps::aiProcess_FlipUVs | aiPostProcessSteps::aiProcess_CalcTangentSpace))
+	if (AI_SUCCESS != exp.Export(finalScene, format.id, outFile.string(), aiPostProcessSteps::aiProcess_FlipUVs | aiPostProcessSteps::aiProcess_CalcTangentSpace | aiPostProcessSteps::aiProcess_JoinIdenticalVertices))
 	{
 		std::cerr << "[Export] Failed to export fbx file!" << std::endl;
 		std::cerr << "[Export] " << exp.GetErrorString() << std::endl;

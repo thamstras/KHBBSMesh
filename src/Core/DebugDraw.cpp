@@ -153,7 +153,7 @@ void CDebugCube::DoDraw(RenderContext& context)
 	shader->setMat4("model"s, model);
 	shader->setMat4("view"s, context.render.viewMatrix);
 	shader->setMat4("projection"s, context.render.projectionMatrix);
-	shader->setVec3("color"s, this->col);
+	shader->setVec4("color"s, glm::vec4(this->col, 1.0f));
 	
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_LINES, 0, 24);

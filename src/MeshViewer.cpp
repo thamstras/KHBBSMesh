@@ -21,7 +21,15 @@ constexpr float MAX_DELTA_TIME = 0.2f;
 	[X] Initial GUI - modify joint transforms (manually 'animate')
 	[X] Draw skeleton (Will need to sort out DebugDrawLine properly, eg: draw all the lines in one GL_LINES draw call via a GL_STREAM_DRAW buffer)
 	[X] BBS PAM File reader
-	[ ] CPAMAnimationProvider - provides animation data to driver
+	[X] CPAMAnimationProvider - provides animation data to driver
+
+	FOR NEXT VERSION
+	[X] FIX SCALE
+	[X] FIX TIME
+	[X] FIX ROTATIONS
+	[X] Check vertex color export
+	[ ] Better export options
+	[ ] Overhaul rendering (Samplers, Anisotropy, Multisampling, check premulti alpha)
 */
 
 MeshViewer::MeshViewer(int argc, char** argv)
@@ -227,23 +235,23 @@ void PrintGLCaps()
 	int i;
 #define CAP_INT(X) glGetIntegerv(X, &i); std::cout << #X ": " << i << std::endl
 	// TODO: This list is incomplete
-	CAP_INT(GL_MAX_COLOR_TEXTURE_SAMPLES);
-	CAP_INT(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-	CAP_INT(GL_MAX_DEPTH_TEXTURE_SAMPLES);
-	CAP_INT(GL_MAX_ELEMENTS_INDICES);
 	CAP_INT(GL_MAX_ELEMENTS_VERTICES);
-	CAP_INT(GL_MAX_FRAGMENT_INPUT_COMPONENTS);
-	CAP_INT(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS);
-	if (GLAD_GL_VERSION_4_3) CAP_INT(GL_MAX_FRAMEBUFFER_SAMPLES);
+	CAP_INT(GL_MAX_ELEMENTS_INDICES);
+	CAP_INT(GL_MAX_VERTEX_ATTRIBS);
+	CAP_INT(GL_MAX_TEXTURE_SIZE);
+	CAP_INT(GL_MAX_COLOR_TEXTURE_SAMPLES);
+	CAP_INT(GL_MAX_DEPTH_TEXTURE_SAMPLES);
 	CAP_INT(GL_MAX_RENDERBUFFER_SIZE);
 	CAP_INT(GL_MAX_TEXTURE_IMAGE_UNITS);
-	CAP_INT(GL_MAX_TEXTURE_SIZE);
-	CAP_INT(GL_MAX_UNIFORM_BUFFER_BINDINGS);
-	CAP_INT(GL_MAX_UNIFORM_BLOCK_SIZE);
-	CAP_INT(GL_MAX_VERTEX_ATTRIBS);
+	CAP_INT(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 	CAP_INT(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS);
 	CAP_INT(GL_MAX_VERTEX_UNIFORM_COMPONENTS);
 	CAP_INT(GL_MAX_VERTEX_OUTPUT_COMPONENTS);
+	CAP_INT(GL_MAX_FRAGMENT_INPUT_COMPONENTS);
+	CAP_INT(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS);
+	CAP_INT(GL_MAX_UNIFORM_BUFFER_BINDINGS);
+	CAP_INT(GL_MAX_UNIFORM_BLOCK_SIZE);
+	if (GLAD_GL_VERSION_4_3) CAP_INT(GL_MAX_FRAMEBUFFER_SAMPLES);
 	if (GLAD_GL_VERSION_4_3) CAP_INT(GL_MAX_VERTEX_ATTRIB_BINDINGS);
 #undef CAP_INT
 	float f;
@@ -251,7 +259,7 @@ void PrintGLCaps()
 	if (GLAD_GL_ARB_texture_filter_anisotropic || GLAD_GL_EXT_texture_filter_anisotropic) CAP_FLOAT(GL_MAX_TEXTURE_MAX_ANISOTROPY);
 #undef CAP_FLOAT
 	
-	std::cout << "[GS] END GL CAPS" << std::endl;
+	std::cout << "[GS] END GL CAPS" << std::endl;		
 }
 
 bool MeshViewer::Init()
@@ -324,6 +332,15 @@ bool MeshViewer::Init()
 	const GLubyte* sVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
 	std::cout << "[GS] Renderer: " << vendor << " " << renderer << std::endl;
 	std::cout << "[GS] OpenGL version: " << version << " (" << sVersion << ")" << std::endl;
+
+	if (!GLAD_GL_VERSION_4_4 && !GLAD_GL_ARB_direct_state_access && !GLAD_GL_ARB_vertex_attrib_binding && GLAD_GL_ARB_texture_storage)
+	{
+		std::string s = "";
+		if (!GLAD_GL_ARB_direct_state_access) s += "\nGL_ARB_direct_state_access";
+		if (!GLAD_GL_ARB_vertex_attrib_binding) s += "\nGL_ARB_vertex_attrib_binding";
+		if (!GLAD_GL_ARB_texture_storage) s += "\nGL_ARB_texture_storage";
+		this->m_fileManager->ShowMessageBox(std::format("You may be unable to run future versions of KHBBSMesh\nYour OpenGL version is {} (vs 4.4) and you don't have: {}\nTry updating your graphics drivers", (const char*)version, s));
+	}
 
 	// # set gl defaults
 	glEnable(GL_DEPTH_TEST);
@@ -451,8 +468,8 @@ void MeshViewer::ProcessInput(GLFWwindow* window, float deltaTime, double worldT
 
 	if (!imguiIo.WantCaptureKeyboard)
 	{
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			m_shouldQuit = true;
+		//if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		//	m_shouldQuit = true;
 
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			m_currentCamera->ProcessKeyboard(FORWARD, deltaTime);
