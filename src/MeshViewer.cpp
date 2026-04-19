@@ -585,3 +585,22 @@ void MeshViewer::SetAnimType(AnimType type)
 		break;
 	}
 }
+
+std::string MeshViewer::CurrModelName()
+{
+	return modelName;
+}
+
+int MeshViewer::LoadedAnimCount()
+{
+	if (m_anims)
+		return m_anims->AnimCount();
+	return 0;
+}
+
+std::string MeshViewer::AnimName(int id)
+{
+	if (m_anims)
+		return m_anims->GetAnimName(id);
+	return std::string();
+}

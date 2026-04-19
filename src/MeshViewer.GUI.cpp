@@ -25,6 +25,16 @@ void MeshViewer::ProcessGUI()
 		}
 	}
 
+	if (pExport != nullptr)
+	{
+		bool stayOpen = pExport->gui_window();
+		if (!stayOpen)
+		{
+			delete pExport;
+			pExport = nullptr;
+		}
+	}
+
 }
 
 void MeshViewer::GUI_MenuBar()
@@ -264,6 +274,20 @@ void MeshViewer::HideMessageModal()
 
 void MeshViewer::GUI_ExportOptions()
 {
+	/*
+	New Window
+	Dropdown for mesh
+	Dropdown for anim
+	Folder select
+	Checkbox: append mesh name
+	Checkbox: append anim name
+	Text with final out path(s)
+	Scale handling options
+	(un)root option
+	Skip geom option (don't write verts, just skel + anim)
+	Skip textures option (don't write texture files, still writes all uv + material info)
+	*/
+
 	if (ImGui::BeginPopupModal("ExportModal"))
 	{
 		if (!gotFormats)

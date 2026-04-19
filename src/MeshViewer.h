@@ -1,3 +1,4 @@
+#pragma once
 #include "Common.h"
 #include "Settings.h"
 #include "WindStructs.h"
@@ -12,6 +13,7 @@
 #include "AssimpInterface.h"
 #include <fstream>
 #include "ArcLoader.h"
+#include "Ops/ExportOp.h"
 
 namespace BBSMesh
 {
@@ -49,6 +51,11 @@ namespace BBSMesh
 		void OnMouseScroll(GLFWwindow* window, double xoffset, double yoffset);
 
 		void ProcessInput(GLFWwindow* window, float deltaTime, double worldTime);
+
+		std::string CurrModelName();
+		int LoadedAnimCount();
+		std::string AnimName(int id);
+
 	private:
 		bool m_shouldQuit = false;
 		RunState m_runState = RunState::NoState;
@@ -84,6 +91,7 @@ namespace BBSMesh
 		bool gotFormats = false;
 		std::optional<ExportFormat> currFormat;
 		char pathBuf[260] = ".\\resources\\export";
+		ExportOp* pExport = nullptr;
 
 		bool Init();
 

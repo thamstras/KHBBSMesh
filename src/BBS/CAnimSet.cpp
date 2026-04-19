@@ -284,6 +284,8 @@ void CBBSAnimationProvider::SelectAnim(int idx)
 
 std::string CBBSAnimationProvider::GetCurrAnimName() const { return animInfos[selectedIdx].name; }
 
+std::string CBBSAnimationProvider::GetAnimName(int idx) const { return animInfos[idx].name; };
+
 Anim const* CBBSAnimationProvider::GetCurrAnim() const { return selectedAnim; };
 
 void CBBSAnimationProvider::SetAnimFrame(float frame)
