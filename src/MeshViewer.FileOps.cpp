@@ -184,5 +184,5 @@ void MeshViewer::LoadFromArcFile(std::string name, std::ifstream& fs)
 
 void MeshViewer::ExportAnimFile()
 {
-	AssimpAnimExporter::ExportSkelScene(m_model, m_anims, modelName, std::string(pathBuf), *currFormat);
+	//AssimpAnimExporter::ExportSkelScene(m_model, m_anims, modelName, std::string(pathBuf), *currFormat);
 }

@@ -139,6 +139,7 @@ namespace BBS
 		void SelectAnim(int idx);
 		std::string GetCurrAnimName() const;
 		Anim const* GetCurrAnim() const;
+		Anim const* GetAnim(int idx) const;
 		std::string GetAnimName(int idx) const;
 
 		void SetAnimFrame(float frame);

@@ -56,6 +56,9 @@ namespace BBSMesh
 		int LoadedAnimCount();
 		std::string AnimName(int id);
 
+		BBS::CSkelModelObject* GetModel();
+		BBS::Anim const* GetAnim(int idx);
+
 	private:
 		bool m_shouldQuit = false;
 		RunState m_runState = RunState::NoState;

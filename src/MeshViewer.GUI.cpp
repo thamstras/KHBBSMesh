@@ -25,6 +25,14 @@ void MeshViewer::ProcessGUI()
 		}
 	}
 
+	/*ImGui::Begin("Test");
+	if (ImGui::Button("DO IT"))
+	{
+		if (pExport) delete pExport;
+		pExport = new ExportOp(this);
+	}
+	ImGui::End();*/
+
 	if (pExport != nullptr)
 	{
 		bool stayOpen = pExport->gui_window();
@@ -126,7 +134,11 @@ void MeshViewer::GUI_MenuBar()
 	}
 
 	if (openAbout) ImGui::OpenPopup("AboutWindow");
-	if (openExport) ImGui::OpenPopup("ExportModal");
+	if (openExport) 
+	{
+		//ImGui::OpenPopup("ExportModal");
+		if (pExport == nullptr) pExport = new ExportOp(this);
+	}
 }
 
 void MeshViewer::GUI_SideBar()
@@ -288,7 +300,7 @@ void MeshViewer::GUI_ExportOptions()
 	Skip textures option (don't write texture files, still writes all uv + material info)
 	*/
 
-	if (ImGui::BeginPopupModal("ExportModal"))
+	/*if (ImGui::BeginPopupModal("ExportModal"))
 	{
 		if (!gotFormats)
 		{
@@ -337,7 +349,7 @@ void MeshViewer::GUI_ExportOptions()
 		}
 
 		ImGui::EndPopup();
-	}
+	}*/
 }
 
 void MeshViewer::GUI_CamWindow()

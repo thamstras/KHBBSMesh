@@ -4,6 +4,7 @@
 #include "BBS/CAnimSet.h"
 #include "BBS/CSkelModelObject.h"
 #include "AssimpInterface.h"
+#include "ExportOptions.h"
 
 class AssimpAnimExporter
 {
@@ -19,5 +20,5 @@ public:
 
 	static std::vector<aiMeshWrapper> ExportSkelMesh(BBS::CSkelModelObject& skelMesh);
 
-	static void ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBSAnimationProvider* anim, std::string modelName, std::string exportPath, ExportFormat format);
+	static void ExportSkelScene(BBS::CSkelModelObject* model, BBS::Anim const* anim, ExportOptions opts);
 };

@@ -109,6 +109,8 @@ void MeshViewer::Run()
 	m_rootRenderContext->env.fogFar = 1000.0f;
 	m_rootRenderContext->env.clearColor = glm::vec4(0.2f, 0.3f, 0.3f, 1.0f);
 
+	//pExport = new ExportOp(this);
+
 	float deltaTime;
 	float lastFrame = glfwGetTime();
 	double worldTime = 0.0;
@@ -603,4 +605,19 @@ std::string MeshViewer::AnimName(int id)
 	if (m_anims)
 		return m_anims->GetAnimName(id);
 	return std::string();
+}
+
+BBS::CSkelModelObject* MeshViewer::GetModel()
+{
+	return m_model;
+}
+
+BBS::Anim const* MeshViewer::GetAnim(int idx)
+{
+	if (m_anims)
+	{
+		return m_anims->GetAnim(idx);
+	}
+
+	return nullptr;
 }

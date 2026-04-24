@@ -19,9 +19,10 @@ struct ExportOptions
 	char path_buf[path_buf_len] = ".\\resources\\export";
 	static constexpr int name_buf_len = 60;
 	char name_buf[name_buf_len] = "";
-	std::string model_format_id;
+	std::string model_format_id = "fbx";
 	NameAppendMode append_model_name = NameAppendMode::Both;
 	NameAppendMode append_anim_name = NameAppendMode::No;
+	std::string final_folder;
 	std::string final_path;
 	// TODO: bone scale handling mode
 	//bool add_extra_root_bone = false; We don't need this, root motion is working now.

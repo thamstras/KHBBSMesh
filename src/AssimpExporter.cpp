@@ -224,18 +224,18 @@ void MergeMesh(aiMeshWrapper& meshA, aiMeshWrapper& meshB)
 	}
 }
 
-void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBSAnimationProvider* anim, std::string modelName, std::string exportPath, ExportFormat format)
+void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::Anim const * anim, ExportOptions opts)
 {
-	std::filesystem::path exportFolder = std::filesystem::path(exportPath);
-	exportFolder.append(modelName);
-	exportFolder.replace_extension("");
+	std::filesystem::path exportFolder = std::filesystem::path(opts.final_folder);
+	//exportFolder.append(modelName);
+	//exportFolder.replace_extension("");
 
 	if (std::filesystem::exists(exportFolder))
 	{
 		if (!std::filesystem::is_directory(exportFolder))
 		{
 			// TODO: Error
-			std::cerr << "[Export] Export path " << exportPath << " is not a directory!" << std::endl;
+			std::cerr << "[Export] Export path " << opts.final_path << " is not a directory!" << std::endl;
 			return;
 		}
 	}
@@ -243,7 +243,7 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	{
 		if (!std::filesystem::create_directories(exportFolder))
 		{
-			std::cerr << "[Export] Could not create directory " << exportPath << "!" << std::endl;
+			std::cerr << "[Export] Could not create directory " << opts.final_path << "!" << std::endl;
 			return;
 		}
 	}
@@ -253,7 +253,7 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	root->mTransformation = aiMatrix4x4();
 	scene.mAllNodes.push_back(root);
 	scene.mRootNode = root;
-	root->mName.Set(modelName);
+	root->mName.Set(opts.model_name);
 
 	if (model->skel != nullptr && model->skel->bones.size() > 0)
 	{
@@ -261,16 +261,19 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 		root->addChildren(1, &tree);
 	}
 
-	std::vector<aiMeshWrapper> mesh = ExportSkelMesh(*model);
-
-	root->mNumMeshes = mesh.size();
-	root->mMeshes = new unsigned int[root->mNumMeshes];
-	for (int i = 0; i < root->mNumMeshes; i++)
+	if (!opts.skip_geom)
 	{
-		aiMesh* theMesh = mesh[i].Finish();
-		theMesh->mName.Set(modelName);
-		scene.mMeshes.push_back(theMesh);
-		root->mMeshes[i] = i;
+		std::vector<aiMeshWrapper> mesh = ExportSkelMesh(*model);
+
+		root->mNumMeshes = mesh.size();
+		root->mMeshes = new unsigned int[root->mNumMeshes];
+		for (int i = 0; i < root->mNumMeshes; i++)
+		{
+			aiMesh* theMesh = mesh[i].Finish();
+			theMesh->mName.Set(opts.model_name);
+			scene.mMeshes.push_back(theMesh);
+			root->mMeshes[i] = i;
+		}
 	}
 
 	for (auto texInfo : model->textureObjects)
@@ -289,12 +292,15 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 		mat->AddProperty(&i, 1, AI_MATKEY_SHADING_MODEL);
 		scene.mMaterials.push_back(mat);
 
-		// Step 2: Write out texture
-		CTexture* tex = texInfo->srcTexture->texture;
-		if (stbi_write_png(outPath.string().c_str(), tex->getWidth(), tex->getHeight(), 4, tex->getPixels(), tex->getWidth() * 4) == 0)
+		if (opts.write_texture_files)
 		{
-			// TODO: error
-			std::cerr << "[Export] Failed to write texture " << texInfo->name << std::endl;
+			// Step 2: Write out texture
+			CTexture* tex = texInfo->srcTexture->texture;
+			if (stbi_write_png(outPath.string().c_str(), tex->getWidth(), tex->getHeight(), 4, tex->getPixels(), tex->getWidth() * 4) == 0)
+			{
+				// TODO: error
+				std::cerr << "[Export] Failed to write texture " << texInfo->name << std::endl;
+			}
 		}
 	}
 
@@ -307,17 +313,7 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 
 	if (anim != nullptr && model->skel != nullptr)
 	{
-		/*for (auto& animInfo : anim->animInfos)
-		{
-			if (animInfo.idx != -1)
-			{
-				scene.mAnimations.push_back(Export(anim->anims[animInfo.idx], animInfo.name, *model->skel));
-			}
-		}*/
-		
-		BBS::Anim const* animToExport = anim->GetCurrAnim();
-		if (animToExport != nullptr)
-			scene.mAnimations.push_back(Export(*animToExport, anim->GetCurrAnimName(), *model->skel));
+		scene.mAnimations.push_back(Export(*anim, opts.anim_name, *model->skel));
 	}
 	
 	aiScene* finalScene = scene.Finish();
@@ -327,9 +323,9 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	// Step 4: Export scene
 	Assimp::Exporter exp = Assimp::Exporter();
 
-	std::filesystem::path outFile = exportFolder;
-	outFile.append(modelName);
-	outFile.replace_extension(format.ext);
+	std::filesystem::path outFile = std::filesystem::path(opts.final_path);
+	//outFile.append(modelName);
+	//outFile.replace_extension(format.ext);
 
 	finalScene->mMetaData = new aiMetadata();
 	// FBX settings
@@ -338,7 +334,7 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::CBBS
 	finalScene->mMetaData->Add("CustomFrameRate", 30.0);
 	finalScene->mMetaData->Add("InheritMode", 2); // Disable scale inheritance
 
-	if (AI_SUCCESS != exp.Export(finalScene, format.id, outFile.string(), aiPostProcessSteps::aiProcess_FlipUVs | aiPostProcessSteps::aiProcess_CalcTangentSpace | aiPostProcessSteps::aiProcess_JoinIdenticalVertices))
+	if (AI_SUCCESS != exp.Export(finalScene, opts.model_format_id, outFile.string(), aiPostProcessSteps::aiProcess_FlipUVs | aiPostProcessSteps::aiProcess_CalcTangentSpace | aiPostProcessSteps::aiProcess_JoinIdenticalVertices))
 	{
 		std::cerr << "[Export] Failed to export fbx file!" << std::endl;
 		std::cerr << "[Export] " << exp.GetErrorString() << std::endl;

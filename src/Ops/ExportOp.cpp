@@ -1,6 +1,8 @@
 #include "Common.h"
 #include "ExportOp.h"
 #include "MeshViewer.h"
+#include "AssimpExporter.h"
+#include <chrono>
 
 using namespace BBSMesh;
 
@@ -53,46 +55,65 @@ bool AppendWidget(const char* label, NameAppendMode* option)
 bool ExportOp::gui_window()
 {
 	bool stayOpen = true;
-	if (ImGui::Begin("Export Options", &stayOpen))
+	if (stage == 0)
 	{
-		bool updatePath = false;
-		ImGui::Text("Selected Model %s", opts.model_name.c_str());
-		if (ImGui::BeginCombo("Selected Anim", opts.anim_name.c_str()))
+		if (ImGui::Begin("Export Options", &stayOpen))
 		{
-			for (int i = 0; i < app->LoadedAnimCount(); i++)
+			bool updatePath = false;
+			ImGui::Text("Selected Model %s", opts.model_name.c_str());
+			if (ImGui::BeginCombo("Selected Anim", opts.anim_name.c_str()))
 			{
-				bool thisOne = i == opts.anim_idx;
-				std::string name = app->AnimName(i);
-				if (name[0] == '\0') continue;
-				if (ImGui::Selectable(name.c_str(), thisOne))
+				for (int i = 0; i < app->LoadedAnimCount(); i++)
 				{
-					opts.anim_idx = i;
-					opts.anim_name = name.c_str();	// The anim names are pulled from fixed sized buffers which tends to lead to excess "\0".
+					bool thisOne = i == opts.anim_idx;
+					std::string name = app->AnimName(i);
+					if (name[0] == '\0') continue;
+					if (ImGui::Selectable(name.c_str(), thisOne))
+					{
+						opts.anim_idx = i;
+						opts.anim_name = name.c_str();	// The anim names are pulled from fixed sized buffers which tends to lead to excess "\0".
+					}
+					if (thisOne)
+						ImGui::SetItemDefaultFocus();
 				}
-				if (thisOne)
-					ImGui::SetItemDefaultFocus();
+				ImGui::EndCombo();
 			}
-			ImGui::EndCombo();
+			ImGui::Separator();
+			updatePath |= ImGui::InputText("Folder", opts.path_buf, opts.path_buf_len);
+			updatePath |= ImGui::InputText("File", opts.name_buf, opts.name_buf_len);
+			updatePath |= AppendWidget("Append Model Name", &opts.append_model_name);
+			updatePath |= AppendWidget("Append Anim Name", &opts.append_anim_name);
+			if (updatePath) UpdateFinalPath();
+			ImGui::Text("Final file path: %s", opts.final_path.c_str());
+			ImGui::Separator();
+			ImGui::Checkbox("Skip Geometry", &opts.skip_geom);
+			ImGui::SetItemTooltip("If set: Only write skeleton + animation data to file; don't write vertex data.\nUseful to save space if exporting multiple animations.");
+			ImGui::SameLine();
+			ImGui::Checkbox("Write Textures", &opts.write_texture_files);
+			ImGui::SetItemTooltip("If set, writes pmo texture data to separate files.\nIf not set: Skips that.");
+			ImGui::Separator();
+			if (ImGui::Button("Cancel")) stayOpen = false;
+			ImGui::SameLine();
+			if (ImGui::Button("Export")) StartExport();
 		}
-		ImGui::Separator();
-		updatePath |= ImGui::InputText("Folder", opts.path_buf, opts.path_buf_len);
-		updatePath |= ImGui::InputText("File", opts.name_buf, opts.name_buf_len);
-		updatePath |= AppendWidget("Append Model Name", &opts.append_model_name);
-		updatePath |= AppendWidget("Append Anim Name", &opts.append_anim_name);
-		if (updatePath) UpdateFinalPath();
-		ImGui::Text("Final file path: %s", opts.final_path.c_str());
-		ImGui::Separator();
-		ImGui::Checkbox("Skip Geometry", &opts.skip_geom);
-		ImGui::SetItemTooltip("If set: Only write skeleton + animation data to file; don't write vertex data.\nUseful to save space if exporting multiple animations.");
-		ImGui::SameLine();
-		ImGui::Checkbox("Write Textures", &opts.write_texture_files);
-		ImGui::SetItemTooltip("If set, writes pmo texture data to separate files.\nIf not set: Skips that.");
-		ImGui::Separator();
-		if (ImGui::Button("Cancel")) stayOpen = false;
-		ImGui::SameLine();
-		ImGui::Button("Export");
+		ImGui::End();
 	}
-	ImGui::End();
+	else if (stage == 1)
+	{
+		using namespace std::chrono_literals;
+		
+		auto status = work.wait_for(0ms);
+		if (status == std::future_status::ready)
+			stayOpen = false;
+		
+		if (ImGui::BeginPopupModal("Exporting"))
+		{
+			ImGui::Text("Export in progress. Please wait...");
+			if (!stayOpen)
+				ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
+		}
+	}
 	return stayOpen;
 }
 
@@ -109,6 +130,7 @@ void ExportOp::UpdateFinalPath()
 		result += opts.anim_name;
 	}
 	if (!result.ends_with('\\')) result += "\\";
+	opts.final_folder = result;
 	bool emptyName = opts.name_buf[0] == '\0';
 	if (!emptyName) result += opts.name_buf;
 	if (opts.append_model_name & NameAppendMode::File)
@@ -122,7 +144,18 @@ void ExportOp::UpdateFinalPath()
 			result += "-";
 		result += opts.anim_name;
 	}
-	// TODO
+	// TODO: format
 	result += ".fbx";
 	opts.final_path = result;
+}
+
+void ExportOp::StartExport()
+{
+	stage++;
+	work = std::async(std::launch::async,
+		[&]()
+		{
+			AssimpAnimExporter::ExportSkelScene(app->GetModel(), app->GetAnim(opts.anim_idx), opts);
+		});
+	ImGui::OpenPopup("Exporting");
 }
