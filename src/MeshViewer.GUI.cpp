@@ -237,16 +237,14 @@ void MeshViewer::GUI_SideBar()
 			ImGui::Separator();
 
 			ImGui::Text("Hide flags");
-			/*int maxGroups = m_model->group;
-			std::bitset<32> bits = std::bitset<32>(m_rootRenderContext->debug.hide_flags);
-			for (int g = 0; g < maxGroups; g++)
+
+			for (int g = 0; g < m_rootRenderContext->debug.hide_flags.size(); g++)
 			{
-				bool v = bits[g];
+				bool v = m_rootRenderContext->debug.hide_flags[g];
 				std::string label = std::format("{}", g);
 				if (ImGui::Checkbox(label.c_str(), &v))
-					bits[g] = v;
-			}*/
-			//m_rootRenderContext->debug.hide_flags = (unsigned int)bits.to_ulong();
+					m_rootRenderContext->debug.hide_flags[g] = v;
+			}
 		}
 	}
 	ImGui::End();

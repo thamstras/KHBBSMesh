@@ -78,7 +78,8 @@ void MeshViewer::OpenModelFile(std::string path, std::ifstream& fs)
 
 	modelName = std::filesystem::path(path).stem().string();
 
-	m_rootRenderContext->debug.hide_flags = 0;
+	m_rootRenderContext->debug.hide_flags.clear();
+	m_rootRenderContext->debug.hide_flags.resize(m_model->group);
 }
 
 void MeshViewer::CloseModelFile()
@@ -136,6 +137,7 @@ void MeshViewer::OpenAnimFile(std::string path, std::ifstream& fs)
 	if (m_anims != nullptr) CloseAnimFile();
 	m_anims = new BBS::CBBSAnimationProvider(file, *m_model->skel);
 	SetAnimType(AnimType::FileAnim);
+	ImGui::SetWindowFocus("Skeleton");
 }
 
 void MeshViewer::CloseAnimFile()
@@ -152,6 +154,11 @@ void MeshViewer::OpenArcFile()
 	if (!m_fileManager->OpenFileWindow(path, EFileOpenType::FILE_ARC))
 		return;
 
+	OpenArcFile(path);
+}
+
+void MeshViewer::OpenArcFile(std::string path)
+{
 	if (m_arcLoader != nullptr)
 	{
 		delete m_arcLoader;

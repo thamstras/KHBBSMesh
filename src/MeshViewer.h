@@ -45,10 +45,12 @@ namespace BBSMesh
 		static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 		static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 		static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+		static void drag_drop_callback(GLFWwindow* window, int count, const char** paths);
 
 		void OnFramebufferSizeChanged(GLFWwindow* window, int width, int height);
 		void OnMouseMoved(GLFWwindow* window, double xpos, double ypos);
 		void OnMouseScroll(GLFWwindow* window, double xoffset, double yoffset);
+		void OnDragDrop(GLFWwindow* window, int count, const char** paths);
 
 		void ProcessInput(GLFWwindow* window, float deltaTime, double worldTime);
 
@@ -114,6 +116,7 @@ namespace BBSMesh
 		void CloseAnimFile();
 		void ExportAnimFile();
 		void OpenArcFile();
+		void OpenArcFile(std::string path);
 		void LoadFromArcFile(std::string name, std::ifstream& fs);
 		void HideMessageModal();
 

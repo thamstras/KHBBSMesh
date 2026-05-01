@@ -171,7 +171,7 @@ void CSkelMesh::Draw(RenderContext& context, const glm::vec3& position, const gl
 	unsigned int secBase = 0;
 	for (CSkelMeshSection& section : sections)
 	{
-		if (context.debug.hide_flags & (1 << section.hideGroup))
+		if (context.debug.hide_flags[section.hideGroup])
 		{
 			secBase += section.vertCount;
 			continue;

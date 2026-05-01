@@ -60,12 +60,6 @@ aiNodeAnimWrapper AssimpAnimExporter::Export(BBS::BoneChannel const* boneAnim, s
 
 aiNode* AssimpAnimExporter::Export(CSkeleton& skeleton)
 {
-	// UNROOT HACK
-	/*aiNode* node = new aiNode();
-	node->mName.Set("unroot");
-	aiNode* rest = ExportSubTree(skeleton.bones[0], skeleton, node);
-	node->addChildren(1, &rest);
-	return node;*/
 	return ExportSubTree(skeleton.bones[0], skeleton, nullptr);
 }
 
@@ -112,8 +106,6 @@ void AddSection(aiMeshWrapper& mesh, BBS::CSkelModelSection& section, BBS::CSkel
 		{
 			if (section.boneIdxs[i] >= 255) continue;
 			if (vert.weights[i] <= 0.0f) continue;
-			// TODO: Unroot hack
-			//mesh.mBones[section.boneIdxs[i] + 1].mWeights.emplace_back(sectionBaseIdx + vi, vert.weights[i]);
 			mesh.mBones[section.boneIdxs[i]].mWeights.emplace_back(sectionBaseIdx + vi, vert.weights[i]);
 		}
 	}
@@ -173,9 +165,6 @@ std::vector<aiMeshWrapper> AssimpAnimExporter::ExportSkelMesh(BBS::CSkelModelObj
 	std::vector<aiBoneWrapper> exBones = std::vector<aiBoneWrapper>();
 	if (skelMesh.skel != nullptr)
 	{
-		// UNROOT HACK
-		//exBones.push_back(aiBoneWrapper());
-		//exBones[0].mName = "unroot";
 		for (auto& b : skelMesh.skel->bones)
 			exBones.push_back(ExportBone(b));
 	}
@@ -227,8 +216,6 @@ void MergeMesh(aiMeshWrapper& meshA, aiMeshWrapper& meshB)
 void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::Anim const * anim, ExportOptions opts)
 {
 	std::filesystem::path exportFolder = std::filesystem::path(opts.final_folder);
-	//exportFolder.append(modelName);
-	//exportFolder.replace_extension("");
 
 	if (std::filesystem::exists(exportFolder))
 	{
@@ -318,14 +305,10 @@ void AssimpAnimExporter::ExportSkelScene(BBS::CSkelModelObject* model, BBS::Anim
 	
 	aiScene* finalScene = scene.Finish();
 
-	//finalScene->
-
 	// Step 4: Export scene
 	Assimp::Exporter exp = Assimp::Exporter();
 
 	std::filesystem::path outFile = std::filesystem::path(opts.final_path);
-	//outFile.append(modelName);
-	//outFile.replace_extension(format.ext);
 
 	finalScene->mMetaData = new aiMetadata();
 	// FBX settings

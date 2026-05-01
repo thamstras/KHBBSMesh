@@ -28,7 +28,16 @@ constexpr float MAX_DELTA_TIME = 0.2f;
 	[X] FIX TIME
 	[X] FIX ROTATIONS
 	[X] Check vertex color export
-	[ ] Better export options
+	[-] Better export options
+		[X] Add format selection
+		[ ] Scale handling?
+	[X] Fix hide groups
+	[X] Add drag/drop support
+	[X] When you load a PAM force the "anim" tab into focus
+
+	FUTURE
+	[ ] Overhaul material handling
+		(ie: split by hide group, transp., texid, and attribs)
 	[ ] Overhaul rendering (Samplers, Anisotropy, Multisampling, check premulti alpha)
 */
 
@@ -326,6 +335,7 @@ bool MeshViewer::Init()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetDropCallback(window, drag_drop_callback);
 
 	// # get version info
 	const GLubyte* vendor = glGetString(GL_VENDOR);
@@ -443,6 +453,42 @@ void MeshViewer::OnMouseScroll(GLFWwindow* window, double xoffset, double yoffse
 {
 	// TODO: Accumulate deltas then Process them in ProcessInput
 	m_mouse.deltaScroll += yoffset;
+}
+
+
+void MeshViewer::drag_drop_callback(GLFWwindow* window, int count, const char** paths)
+{
+	void* windPtr = glfwGetWindowUserPointer(window);
+	if (windPtr != nullptr)
+	{
+		MeshViewer* pThis = reinterpret_cast<MeshViewer*>(windPtr);
+		pThis->OnDragDrop(window, count, paths);
+	}
+}
+
+void MeshViewer::OnDragDrop(GLFWwindow* window, int count, const char** paths)
+{
+	for (int i = 0; i < count; i++)
+	{
+		std::filesystem::path path = std::filesystem::path(paths[i]);
+		auto ext = path.extension();
+		if (ext == ".pmo")
+		{
+			std::ifstream fs = std::ifstream(path, std::ifstream::binary);
+			if (fs.is_open())
+				OpenModelFile(path.string(), fs);
+		}
+		else if (ext == ".pam")
+		{
+			std::ifstream fs = std::ifstream(path, std::ifstream::binary);
+			if (fs.is_open())
+				OpenAnimFile(path.string(), fs);
+		}
+		else if (ext == ".arc")
+		{
+			OpenArcFile(path.string());
+		}
+	}
 }
 
 // TODO: We could handle mouse button + keyboard events directly.

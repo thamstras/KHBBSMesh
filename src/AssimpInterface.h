@@ -1,8 +1,5 @@
 #pragma once
 #include "Common.h"
-#include "Core\CTexture.h"
-#include "Core\CMesh.h"
-#include <map>
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
 

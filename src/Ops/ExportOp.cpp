@@ -7,9 +7,15 @@
 using namespace BBSMesh;
 
 std::optional<ExportOptions> ExportOp::prevExpOpts;
+std::optional<std::vector<ExportFormat>> s_ExportFormats;
 
 ExportOp::ExportOp(MeshViewer* app) : app(app)
 {
+	if (!s_ExportFormats.has_value())
+	{
+		s_ExportFormats = GetExportOptions();
+	}
+
 	opts.model_name = app->CurrModelName();
 
 	if (prevExpOpts.has_value() && prevExpOpts->model_name == opts.model_name)
@@ -60,6 +66,7 @@ bool ExportOp::gui_window()
 		if (ImGui::Begin("Export Options", &stayOpen))
 		{
 			bool updatePath = false;
+
 			ImGui::Text("Selected Model %s", opts.model_name.c_str());
 			if (ImGui::BeginCombo("Selected Anim", opts.anim_name.c_str()))
 			{
@@ -79,19 +86,41 @@ bool ExportOp::gui_window()
 				ImGui::EndCombo();
 			}
 			ImGui::Separator();
+
 			updatePath |= ImGui::InputText("Folder", opts.path_buf, opts.path_buf_len);
 			updatePath |= ImGui::InputText("File", opts.name_buf, opts.name_buf_len);
 			updatePath |= AppendWidget("Append Model Name", &opts.append_model_name);
 			updatePath |= AppendWidget("Append Anim Name", &opts.append_anim_name);
+
+			auto itr = std::find_if(s_ExportFormats->cbegin(), s_ExportFormats->cend(), [&](ExportFormat v) { return v.id == opts.model_format_id; });
+			auto p = itr == s_ExportFormats->cend() ? "None" : itr->desc;
+			if (ImGui::BeginCombo("Format", p.c_str()))
+			{
+				for (auto& fmt : *s_ExportFormats)
+				{
+					bool thisOne = fmt.id == opts.model_format_id;
+					if (ImGui::Selectable(fmt.desc.c_str(), thisOne))
+					{
+						opts.model_format_id = fmt.id;
+						updatePath = true;
+					}
+					if (thisOne)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
 			if (updatePath) UpdateFinalPath();
 			ImGui::Text("Final file path: %s", opts.final_path.c_str());
 			ImGui::Separator();
+
 			ImGui::Checkbox("Skip Geometry", &opts.skip_geom);
 			ImGui::SetItemTooltip("If set: Only write skeleton + animation data to file; don't write vertex data.\nUseful to save space if exporting multiple animations.");
 			ImGui::SameLine();
 			ImGui::Checkbox("Write Textures", &opts.write_texture_files);
 			ImGui::SetItemTooltip("If set, writes pmo texture data to separate files.\nIf not set: Skips that.");
 			ImGui::Separator();
+
 			if (ImGui::Button("Cancel")) stayOpen = false;
 			ImGui::SameLine();
 			if (ImGui::Button("Export")) StartExport();
@@ -144,8 +173,9 @@ void ExportOp::UpdateFinalPath()
 			result += "-";
 		result += opts.anim_name;
 	}
-	// TODO: format
-	result += ".fbx";
+	auto itr = std::find_if(s_ExportFormats->cbegin(), s_ExportFormats->cend(), [&](ExportFormat v) { return v.id == opts.model_format_id; });
+	if (itr != s_ExportFormats->cend())
+		result += "." + itr->ext;
 	opts.final_path = result;
 }
 
@@ -158,4 +188,5 @@ void ExportOp::StartExport()
 			AssimpAnimExporter::ExportSkelScene(app->GetModel(), app->GetAnim(opts.anim_idx), opts);
 		});
 	ImGui::OpenPopup("Exporting");
+	prevExpOpts = opts;
 }
